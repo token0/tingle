@@ -38,11 +38,12 @@ subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/fra
 
 # disassemble it
 print(" *** Disassembling framework...");
-subprocess.check_call(["java", "-jar", curdir+"/apktool.jar", "d", "framework.jar"]);
+subprocess.check_call(["unzip", "-oq", "framework.jar", "classes.dex"]);
+subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "classes.dex"]);
 
 # do the injection
 print(" *** Patching...");
-to_patch = "framework.jar.out/smali/android/content/pm/PackageParser.smali";
+to_patch = "smali/android/content/pm/PackageParser.smali";
 
 f = open(to_patch, "r");
 old_contents = f.readlines();
@@ -107,13 +108,13 @@ print(" *** Succeded.");
 
 # reassemble it
 print(" *** Reassembling smali...");
-subprocess.check_call(["java", "-jar", curdir+"/apktool.jar", "b", "framework.jar.out"]);
+subprocess.check_call(["java", "-Xmx512M", "-jar", curdir+"/tools/smali.jar", "smali/", "-oclasses.dex"])
+if sys.platform == "win32":
+    subprocess.check_call(["attrib", "-a", "classes.dex"]);
 
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
-os.chdir("framework.jar.out/build/apk");
-subprocess.check_call(["zip", "-r", "../../../framework.jar", "classes.dex"]);
-os.chdir("../../..");
+subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
 
 # push to device
 print(" *** Pushing changes to the device...");
