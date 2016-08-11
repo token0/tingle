@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import os, subprocess, tempfile, time, shutil, sys
+import os, platform, subprocess, tempfile, time, shutil, sys
+
+print(" *** OS:", platform.system(), platform.release());
 
 # ensure binaries are present
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8")
