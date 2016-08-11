@@ -3,6 +3,7 @@ import os, sys, platform, subprocess, tempfile, shutil;
 
 print(" *** OS:", platform.system(), platform.release());
 
+subprocess.check_call(["adb", "start-server"]);
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
 
 if devices.count("\n") <= 2:
