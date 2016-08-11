@@ -6,16 +6,16 @@ print(" *** OS:", platform.system(), platform.release());
 subprocess.check_output(["adb", "start-server"]);
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
 
-if devices.count("\n") <= 2:
+if devices.count(os.linesep) <= 2:
     print(" *** Please connect your device first.");
     sys.exit(1);
 
-devices = devices.split("\n")[1:-2];
+devices = devices.split(os.linesep)[1:-2];
 devices = [a.split("\t")[0] for a in devices];
 
 if len(devices) > 1:
     print("Enter id of device to target:");
-    id = input("\n\t".join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + "\n\n> ");
+    id = input((os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
     chosen_one = devices[int(id)-1];
 else:
     chosen_one = devices[0];
