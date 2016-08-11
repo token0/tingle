@@ -20,9 +20,7 @@ if len(devices) > 1:
 else:
     chosen_one = devices[0];
 
-print(" *** Selected device " + chosen_one);
-
-print(" *** Device detected! proceeding...");
+print(" *** Selected device:", chosen_one);
 
 # pull framework somewhere temporary
 curdir = os.getcwd();
@@ -43,7 +41,7 @@ print(" *** Disassembling framework...");
 subprocess.check_call(["java", "-jar", curdir+"/apktool.jar", "d", "framework.jar"]);
 
 # do the injection
-print(" *** Done. Now this won't hurt a bit...");
+print(" *** Patching...");
 to_patch = "framework.jar.out/smali/android/content/pm/PackageParser.smali";
 
 f = open(to_patch, "r");
@@ -98,26 +96,27 @@ if not already_patched and not partially_patched:
 elif partially_patched and not already_patched:
     print(" *** Previous failed patch attempt, not including the fillinsig method again...");
 elif already_patched:
-    print(" *** This framework.jar appears to already have been patched... Exiting.");
+    print(" *** This framework.jar appears to have been already patched... Exiting.");
     sys.exit(0);
 
 f = open(to_patch, "w");
 contents = "".join(contents);
 f.write(contents);
 f.close();
+print(" *** Succeded.");
 
 # reassemble it
-print(" *** Injection successful. Reassembling smali...");
+print(" *** Reassembling smali...");
 subprocess.check_call(["java", "-jar", curdir+"/apktool.jar", "b", "framework.jar.out"]);
 
-# put classes.smali into framework.jar
-print(" *** Putting things back like nothing ever happened...");
+# put classes.dex into framework.jar
+print(" *** Reassembling framework...");
 os.chdir("framework.jar.out/build/apk");
 subprocess.check_call(["zip", "-r", "../../../framework.jar", "classes.dex"]);
 os.chdir("../../..");
 
 # push to device
-print(" *** Pushing changes to device...");
+print(" *** Pushing changes to the device...");
 subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
 
 print(" *** All done! :)");
