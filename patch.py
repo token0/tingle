@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, platform, subprocess, tempfile, time, shutil;
+import os, sys, platform, subprocess, tempfile, shutil;
 
 print(" *** OS:", platform.system(), platform.release());
 
@@ -7,7 +7,7 @@ devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
 
 if devices.count("\n") <= 2:
     print(" *** Please connect your device first.");
-    sys.exit(0);
+    sys.exit(1);
 
 devices = devices.split("\n")[1:-2];
 devices = [a.split("\t")[0] for a in devices];
