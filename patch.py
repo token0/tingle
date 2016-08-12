@@ -66,21 +66,21 @@ partially_patched = False;
 
 while i < len(old_contents):
     if ";->fillinsig" in old_contents[i]:
-        already_patched = True;
+        already_patched = True
     if ".method public static fillinsig" in old_contents[i]:
-        partially_patched = True;
+        partially_patched = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True;
+        in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True;
+        in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True;
+        in_function = True
     if ".end method" in old_contents[i]:
-        in_function = False;
+        in_function = False
     if in_function and ".line" in old_contents[i]:
-        start_of_line = i + 1;
+        start_of_line = i + 1
     if in_function and "arraycopy" in old_contents[i]:
-        right_line = True;
+        right_line = True
     if in_function and "Landroid/content/pm/PackageInfo;-><init>()V" in old_contents[i]:
         stored_register = old_contents[i].split("{")[1].split("}")[0];
     if not already_patched and in_function and right_line and not done_patching:
