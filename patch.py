@@ -37,14 +37,14 @@ print(" *** Working dir: %s" % dirpath);
 
 print(" *** Rooting adbd...");
 root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
-if root_check.find('root access is disabled') == 0:
-    print(os.linesep + 'ERROR: Root access is disabled.' + os.linesep + 'Enable it in Settings -> Developer options -> Root access -> Apps and ADB.');
+if root_check.find("root access is disabled") == 0:
+    print(os.linesep + "ERROR: Root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
     sys.exit(2);
 print("      DEBUG:", root_check.rstrip());
 subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
 remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
-if remount_check.find('remount failed') == 0:
-    print(os.linesep + 'ERROR: Remount failed.');
+if remount_check.find("remount failed") == 0:
+    print(os.linesep + "ERROR: Remount failed.");
     sys.exit(3);
 
 print(" *** Pulling framework from device...");
