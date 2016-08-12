@@ -47,10 +47,14 @@ subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/fra
 print(" *** Disassembling framework and smali...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "framework.jar"]);
 
+# check the existence of the file to patch
+to_patch = "./smali/android/content/pm/PackageParser.smali";
+if not os.path.exists(to_patch):
+    print(os.linesep + "ERROR: The disassembling has probably failed, this file is missing:", to_patch);
+    sys.exit(4);
+
 # do the injection
 print(" *** Patching...");
-to_patch = "smali/android/content/pm/PackageParser.smali";
-
 f = open(to_patch, "r");
 old_contents = f.readlines();
 f.close();
