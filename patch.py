@@ -44,9 +44,8 @@ print(" *** Pulling framework from device...");
 subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 
 # disassemble it
-print(" *** Disassembling framework...");
-subprocess.check_call(["unzip", "-oq", "framework.jar", "classes.dex"]);
-subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "classes.dex"]);
+print(" *** Disassembling framework and smali...");
+subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "framework.jar"]);
 
 # do the injection
 print(" *** Patching...");
