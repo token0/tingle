@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 import os, sys, platform, subprocess, tempfile, shutil;
 
+def program_exist(program):
+    import distutils.spawn;
+    if not distutils.spawn.find_executable(program):
+        print(os.linesep + "ERROR: Missing executable =>", program);
+        return False;
+    return True;
+
 print(" *** OS:", platform.system(), platform.release());
 
 subprocess.check_output(["adb", "start-server"]);
@@ -123,6 +130,10 @@ print(" *** Reassembling smali...");
 subprocess.check_call(["java", "-Xmx512M", "-jar", curdir+"/tools/smali.jar", "smali/", "-oclasses.dex"])
 if sys.platform == "win32":
     subprocess.check_call(["attrib", "-a", "classes.dex"]);
+
+# check the existence of the compression program
+if not program_exist("zip"):
+    sys.exit(5);
 
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
