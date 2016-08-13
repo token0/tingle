@@ -128,16 +128,20 @@ print(" *** Succeded.");
 # reassemble it
 print(" *** Reassembling smali...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
+
+compression_program = "7za";
 if sys.platform == "win32":
-    subprocess.check_call(["attrib", "-a", "classes.dex"]);
+    compression_program = curdir+"/tools/7za-w32.exe";
+    subprocess.check_call(["attrib", "-a", "./classes.dex"]);
 
 # check the existence of the compression program
-if not program_exist("zip"):
+if not program_exist(compression_program):
     sys.exit(5);
 
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
-subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
+#subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
+subprocess.check_output([compression_program, "a", "-tzip", "-y", "./framework.jar", "./classes.dex"]);
 
 # push to device
 print(" *** Pushing changes to the device...");
