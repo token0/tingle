@@ -127,7 +127,7 @@ print(" *** Succeded.");
 
 # reassemble it
 print(" *** Reassembling smali...");
-subprocess.check_call(["java", "-Xmx512M", "-jar", curdir+"/tools/smali.jar", "smali/", "-oclasses.dex"])
+subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
 if sys.platform == "win32":
     subprocess.check_call(["attrib", "-a", "classes.dex"]);
 
