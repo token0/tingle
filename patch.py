@@ -43,7 +43,7 @@ if root_check.find("root access is disabled") == 0:
 print("      DEBUG:", root_check.rstrip());
 subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
 remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
-if remount_check.find("remount failed") == 0:
+if remount_check.find("remount failed") == 0 and ("Success" not in remount_check):  #Do NOT stop with "remount failed: Success"
     print(os.linesep + "ERROR: Remount failed.");
     sys.exit(3);
 
