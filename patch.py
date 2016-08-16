@@ -135,8 +135,7 @@ if sys.platform == "win32":
     subprocess.check_call(["attrib", "-a", "./classes.dex"]);
 
 # check the existence of the compression program
-if not program_exist(compression_program):
-    sys.exit(5);
+if not program_exist(compression_program): sys.exit(5);
 
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
