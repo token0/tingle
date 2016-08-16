@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 import os, sys, platform, subprocess, tempfile, shutil;
 
+curdir = os.getcwd();
+compression_program = "7za";
+if sys.platform == "win32": compression_program = curdir+"/tools/7za-w32.exe";
+
 def program_exist(program):
     import distutils.spawn;
     if not distutils.spawn.find_executable(program):
@@ -9,6 +13,10 @@ def program_exist(program):
     return True;
 
 print(" *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
+
+# check the existence of the needed components
+if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
+if not program_exist("adb"): sys.exit(51);
 
 subprocess.check_output(["adb", "start-server"]);
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
@@ -30,7 +38,6 @@ else:
 print(" *** Selected device:", chosen_one);
 
 # pull framework somewhere temporary
-curdir = os.getcwd();
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
@@ -128,14 +135,7 @@ print(" *** Succeded.");
 # reassemble it
 print(" *** Reassembling smali...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
-
-compression_program = "7za";
-if sys.platform == "win32":
-    compression_program = curdir+"/tools/7za-w32.exe";
-    subprocess.check_call(["attrib", "-a", "./classes.dex"]);
-
-# check the existence of the compression program
-if not program_exist(compression_program): sys.exit(5);
+if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./classes.dex"]);
 
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
