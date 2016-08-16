@@ -22,7 +22,7 @@ subprocess.check_output(["adb", "start-server"]);
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
 
 if devices.count(os.linesep) <= 2:
-    print(" *** Please connect your device first.");
+    print(os.linesep + "ERROR: No device detected! Please connect your device first.");
     sys.exit(1);
 
 devices = devices.split(os.linesep)[1:-2];
