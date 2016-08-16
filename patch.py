@@ -8,7 +8,7 @@ def program_exist(program):
         return False;
     return True;
 
-print(" *** OS:", platform.system(), platform.release());
+print(" *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 
 subprocess.check_output(["adb", "start-server"]);
 devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
