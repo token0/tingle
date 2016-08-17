@@ -144,7 +144,7 @@ if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./classes.de
 # put classes.dex into framework.jar
 print(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
-subprocess.check_output([compression_program, "a", "-tzip", "-y", "./framework.jar", "./classes.dex"]);
+subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./classes.dex"]);
 
 # push to device
 print(" *** Pushing changes to the device...");
