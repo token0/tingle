@@ -12,6 +12,10 @@ def program_exist(program):
         return False;
     return True;
 
+# wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
+def on_exit(): import msvcrt; msvcrt.getch();
+if sys.platform == "win32": import atexit; atexit.register(on_exit);
+
 print(" *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 
 # check the existence of the needed components
@@ -151,6 +155,3 @@ print(" *** All done! :)");
 # clean up
 os.chdir(curdir);
 #shutil.rmtree(dirpath);
-
-# wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
-if sys.platform == "win32": import msvcrt; msvcrt.getch();
