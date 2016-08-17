@@ -151,3 +151,6 @@ print(" *** All done! :)");
 # clean up
 os.chdir(curdir);
 #shutil.rmtree(dirpath);
+
+# wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
+if sys.platform == "win32": import msvcrt; msvcrt.getch();
