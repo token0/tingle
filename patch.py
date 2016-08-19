@@ -46,8 +46,11 @@ def enable_device_writing(chosen_one):
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
-print("Where do you want to take the file to patch?" + os.linesep);
-mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
+if os.environ.get("RUN_TYPE") != "dumb":
+    print("Where do you want to take the file to patch?" + os.linesep);
+    mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
+else:
+    mode = 2;
 
 # Check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
