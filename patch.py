@@ -16,8 +16,6 @@ def program_exist(program):
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
-print(" *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
-
 # check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
 if not program_exist("adb"): sys.exit(51);
@@ -33,12 +31,13 @@ devices = devices.split(os.linesep)[1:-2];
 devices = [a.split("\t")[0] for a in devices];
 
 if len(devices) > 1:
-    print("Enter id of device to target:");
-    id = input((os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
+    print("Enter id of device to target:" + os.linesep);
+    id = input("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
     chosen_one = devices[int(id)-1];
 else:
     chosen_one = devices[0];
 
+print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 print(" *** Selected device:", chosen_one);
 
 # pull framework somewhere temporary
