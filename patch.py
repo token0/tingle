@@ -38,28 +38,28 @@ def enable_device_writing(chosen_one):
     print("      DEBUG:", root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
     remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
-    if remount_check.find("remount failed") == 0 and ("Success" not in remount_check):  #Do NOT stop with "remount failed: Success"
+    if remount_check.find("remount failed") == 0 and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep + "ERROR: Remount failed.");
         sys.exit(3);
 
-# wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
+# Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
 print("Where do you want to take the file to patch?" + os.linesep);
 mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
 
-# check the existence of the needed components
+# Check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
 if mode == 1:
     if not program_exist("adb"): sys.exit(51);
-    # select device
+    # Select device
     chosen_one = select_device();
 
 print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 if mode == 1: print(" *** Selected device:", chosen_one);
 
-# pull framework somewhere temporary
+# Pull framework somewhere temporary
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
@@ -73,17 +73,17 @@ if mode == 1:
 else:
     shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
 
-# disassemble it
+# Disassemble it
 print(" *** Disassembling framework and smali...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "framework.jar"]);
 
-# check the existence of the file to patch
+# Check the existence of the file to patch
 to_patch = "./smali/android/content/pm/PackageParser.smali";
 if not os.path.exists(to_patch):
     print(os.linesep + "ERROR: The disassembling has probably failed, this file is missing:", to_patch);
     sys.exit(4);
 
-# do the injection
+# Do the injection
 print(" *** Patching...");
 f = open(to_patch, "r");
 old_contents = f.readlines();
@@ -93,7 +93,7 @@ f = open(curdir+"/fillinsig.smali", "r");
 fillinsig = f.readlines();
 f.close();
 
-# add fillinsig method
+# Add fillinsig method
 i = 0;
 contents = [];
 already_patched = False;
@@ -146,25 +146,25 @@ f = open(to_patch, "w");
 contents = "".join(contents);
 f.write(contents);
 f.close();
-print(" *** Succeded.");
+print(" *** Patching succeeded.");
 
-# reassemble it
+# Reassemble it
 print(" *** Reassembling smali...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
 if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./classes.dex"]);
 
-# put classes.dex into framework.jar
+# Put classes.dex into framework.jar
 print(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./classes.dex"]);
 
 if mode == 1:
-    # push to device
+    # Push to device
     print(" *** Pushing changes to the device...");
     subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
 
 print(" *** All done! :)");
 
-# clean up
+# Clean up
 os.chdir(curdir);
 #shutil.rmtree(dirpath);
