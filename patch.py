@@ -74,8 +74,11 @@ else:
     shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
 
 # Disassemble it
-print(" *** Disassembling framework and classes...");
-subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "framework.jar"]);
+print(" *** Disassembling framework...");
+subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
+print(" *** Disassembling classes...");
+subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o./smali/", "framework/classes.dex"]);
+###subprocess.check_call(["unzip", "-oq", "framework.jar", "classes.dex"]);
 
 # Check the existence of the file to patch
 to_patch = "./smali/android/content/pm/PackageParser.smali";
