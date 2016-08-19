@@ -12,6 +12,24 @@ def program_exist(program):
         return False;
     return True;
 
+def select_device():
+    subprocess.check_output(["adb", "start-server"]);
+    devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
+    if devices.count(os.linesep) <= 2:
+        print(os.linesep + "ERROR: No device detected! Please connect your device first.");
+        sys.exit(1);
+
+    devices = devices.split(os.linesep)[1:-2];
+    devices = [a.split("\t")[0] for a in devices];
+
+    if len(devices) > 1:
+        print("Enter id of device to target:" + os.linesep);
+        id = input("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
+        chosen_one = devices[int(id)-1];
+    else:
+        chosen_one = devices[0];
+    return chosen_one;
+
 # wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
@@ -20,22 +38,7 @@ if sys.platform == "win32": import atexit; atexit.register(on_exit);
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
 if not program_exist("adb"): sys.exit(51);
 
-subprocess.check_output(["adb", "start-server"]);
-devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
-
-if devices.count(os.linesep) <= 2:
-    print(os.linesep + "ERROR: No device detected! Please connect your device first.");
-    sys.exit(1);
-
-devices = devices.split(os.linesep)[1:-2];
-devices = [a.split("\t")[0] for a in devices];
-
-if len(devices) > 1:
-    print("Enter id of device to target:" + os.linesep);
-    id = input("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
-    chosen_one = devices[int(id)-1];
-else:
-    chosen_one = devices[0];
+chosen_one = select_device();
 
 print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 print(" *** Selected device:", chosen_one);
