@@ -30,6 +30,18 @@ def select_device():
         chosen_one = devices[0];
     return chosen_one;
 
+def enable_device_writing(chosen_one):
+    root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
+    if root_check.find("root access is disabled") == 0:
+        print(os.linesep + "ERROR: Root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
+        sys.exit(2);
+    print("      DEBUG:", root_check.rstrip());
+    subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
+    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
+    if remount_check.find("remount failed") == 0 and ("Success" not in remount_check):  #Do NOT stop with "remount failed: Success"
+        print(os.linesep + "ERROR: Remount failed.");
+        sys.exit(3);
+
 # wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
@@ -37,7 +49,6 @@ if sys.platform == "win32": import atexit; atexit.register(on_exit);
 # check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
 if not program_exist("adb"): sys.exit(51);
-
 chosen_one = select_device();
 
 print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
@@ -49,16 +60,7 @@ os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
 
 print(" *** Rooting adbd...");
-root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
-if root_check.find("root access is disabled") == 0:
-    print(os.linesep + "ERROR: Root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
-    sys.exit(2);
-print("      DEBUG:", root_check.rstrip());
-subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
-remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
-if remount_check.find("remount failed") == 0 and ("Success" not in remount_check):  #Do NOT stop with "remount failed: Success"
-    print(os.linesep + "ERROR: Remount failed.");
-    sys.exit(3);
+enable_device_writing(chosen_one);
 
 print(" *** Pulling framework from device...");
 subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
