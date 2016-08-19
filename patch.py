@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os, sys, platform, subprocess, tempfile, shutil;
 
+dumb_mode = False;
 curdir = os.getcwd();
 compression_program = "7za";
 if sys.platform == "win32": compression_program = curdir+"/tools/7za-w32.exe";
+if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
 
 def program_exist(program):
     import distutils.spawn;
@@ -46,7 +48,7 @@ def enable_device_writing(chosen_one):
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
-if os.environ.get("RUN_TYPE") != "dumb":
+if not dumb_mode:
     print("Where do you want to take the file to patch?" + os.linesep);
     mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
 else:
@@ -66,6 +68,8 @@ if mode == 1: print(" *** Selected device:", chosen_one);
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
+
+if dumb_mode: sys.exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
     print(" *** Rooting adbd...");
