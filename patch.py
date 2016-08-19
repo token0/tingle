@@ -89,8 +89,7 @@ if not os.path.exists("./framework/classes.dex"):
     sys.exit(5);
 
 print(" *** Disassembling classes...");
-subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o./smali/", "framework/classes.dex"]);
-###subprocess.check_call(["unzip", "-oq", "framework.jar", "classes.dex"]);
+subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o./smali/", "./framework/classes.dex"]);
 
 # Check the existence of the file to patch
 to_patch = "./smali/android/content/pm/PackageParser.smali";
