@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import os, sys, platform, subprocess, tempfile, shutil;
 
 dumb_mode = False;
@@ -76,7 +76,7 @@ if mode == 1:
     enable_device_writing(chosen_one);
 
     print(" *** Pulling framework from device...");
-    subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+    subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 else:
     shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
 
@@ -171,7 +171,7 @@ subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.j
 if mode == 1:
     # Push to device
     print(" *** Pushing changes to the device...");
-    subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+    subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
 
 print(" *** All done! :)");
 
