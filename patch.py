@@ -46,24 +46,32 @@ def enable_device_writing(chosen_one):
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
+print("Where do you want to take the file to patch?" + os.linesep);
+mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
+
 # check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
-if not program_exist("adb"): sys.exit(51);
-chosen_one = select_device();
+if mode == 1:
+    if not program_exist("adb"): sys.exit(51);
+    # select device
+    chosen_one = select_device();
 
 print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
-print(" *** Selected device:", chosen_one);
+if mode == 1: print(" *** Selected device:", chosen_one);
 
 # pull framework somewhere temporary
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
 
-print(" *** Rooting adbd...");
-enable_device_writing(chosen_one);
+if mode == 1:
+    print(" *** Rooting adbd...");
+    enable_device_writing(chosen_one);
 
-print(" *** Pulling framework from device...");
-subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+    print(" *** Pulling framework from device...");
+    subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+else:
+    shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
 
 # disassemble it
 print(" *** Disassembling framework and smali...");
@@ -150,9 +158,10 @@ print(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./classes.dex"]);
 
-# push to device
-print(" *** Pushing changes to the device...");
-subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+if mode == 1:
+    # push to device
+    print(" *** Pushing changes to the device...");
+    subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
 
 print(" *** All done! :)");
 
