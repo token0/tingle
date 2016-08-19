@@ -74,7 +74,7 @@ else:
     shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
 
 # Disassemble it
-print(" *** Disassembling framework and smali...");
+print(" *** Disassembling framework and classes...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-osmali/", "framework.jar"]);
 
 # Check the existence of the file to patch
@@ -149,7 +149,7 @@ f.close();
 print(" *** Patching succeeded.");
 
 # Reassemble it
-print(" *** Reassembling smali...");
+print(" *** Reassembling classes...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
 if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./classes.dex"]);
 
