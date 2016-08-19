@@ -83,6 +83,11 @@ else:
 # Disassemble it
 print(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
+
+if not os.path.exists("./framework/classes.dex"):
+    print(os.linesep + "ERROR: classes.dex is missing, probably your file is odexed.");
+    sys.exit(5);
+
 print(" *** Disassembling classes...");
 subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o./smali/", "framework/classes.dex"]);
 ###subprocess.check_call(["unzip", "-oq", "framework.jar", "classes.dex"]);
