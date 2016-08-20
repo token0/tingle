@@ -64,7 +64,6 @@ if mode == 1:
 print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
 if mode == 1: print(" *** Selected device:", chosen_one);
 
-# Pull framework somewhere temporary
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
@@ -72,9 +71,7 @@ print(" *** Working dir: %s" % dirpath);
 if dumb_mode: sys.exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
-    print(" *** Rooting adbd...");
-    enable_device_writing(chosen_one);
-
+    # Pull framework somewhere temporary
     print(" *** Pulling framework from device...");
     subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 else:
@@ -173,6 +170,8 @@ print(" *** Reassembling framework...");
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./classes.dex"]);
 
 if mode == 1:
+    print(" *** Rooting adbd...");
+    enable_device_writing(chosen_one);
     # Push to device
     print(" *** Pushing changes to the device...");
     subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
