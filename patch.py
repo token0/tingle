@@ -81,18 +81,24 @@ else:
 print(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
-if not os.path.exists("./framework/classes.dex"):
-    print(os.linesep + "ERROR: classes.dex is missing, probably your file is odexed.");
-    sys.exit(5);
+def find_smali(smali_to_search, dir, disassembler):
+    dir_list = tuple(sorted(os.listdir(dir)));
+    for filename in dir_list:
+        print("      DEBUG:", filename);
+        folder = "./smali-"+(filename.rsplit(".", 1)[0])+"/";
+        subprocess.check_call(["java", "-jar", disassembler, "-x", "-o"+folder, dir+filename]);
+        if os.path.exists(folder+smali_to_search): return (folder, filename, dir_list[-1]);
+    return (False, False, False);
 
 print(" *** Disassembling classes...");
-subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o./smali/", "./framework/classes.dex"]);
+smali_to_search = "android/content/pm/PackageParser.smali";
+smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "./framework/", curdir+"/tools/baksmali.jar");
 
 # Check the existence of the file to patch
-to_patch = "./smali/android/content/pm/PackageParser.smali";
-if not os.path.exists(to_patch):
-    print(os.linesep + "ERROR: The disassembling has probably failed, this file is missing:", to_patch);
+if smali_folder == False:
+    print(os.linesep + "ERROR: The file to patch cannot be found, probably it is odexed.");
     sys.exit(4);
+to_patch = smali_folder+smali_to_search;
 
 # Do the injection
 print(" *** Patching...");
@@ -161,13 +167,13 @@ print(" *** Patching succeeded.");
 
 # Reassemble it
 print(" *** Reassembling classes...");
-subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-oclasses.dex", "./smali/"]);
-if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./classes.dex"]);
+subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o./"+dex_filename, smali_folder]);
+if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./"+dex_filename]);
 
-# Put classes.dex into framework.jar
+# Put classes back into framework
 print(" *** Reassembling framework...");
-#subprocess.check_call(["zip", "-q9X", "framework.jar", "classes.dex"]);
-subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./classes.dex"]);
+#subprocess.check_call(["zip", "-q9X", "framework.jar", "./"+dex_filename]);
+subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./"+dex_filename]);
 
 if mode == 1:
     print(" *** Rooting adbd...");
