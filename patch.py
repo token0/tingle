@@ -7,6 +7,12 @@ compression_program = "7za";
 if sys.platform == "win32": compression_program = curdir+"/tools/7za-w32.exe";
 if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
 
+def debug(msg):
+    print("      DEBUG:", msg);
+
+def remove_ext(filename):
+    return filename.rsplit(".", 1)[0];
+
 def program_exist(program):
     import distutils.spawn;
     if not distutils.spawn.find_executable(program):
@@ -37,9 +43,9 @@ def enable_device_writing(chosen_one):
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
         print(os.linesep + "ERROR: You do NOT have root or root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         sys.exit(2);
-    print("      DEBUG:", root_check.rstrip());
+    debug(root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
-    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); print("      DEBUG:", remount_check.rstrip());
+    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); debug(remount_check.rstrip());
     if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep + "ERROR: Remount failed.");
         sys.exit(3);
@@ -81,18 +87,21 @@ else:
 print(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
-def find_smali(smali_to_search, dir, disassembler):
+def disassemble(file, out_dir):
+    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
+
+def find_smali(smali_to_search, dir):
     dir_list = tuple(sorted(os.listdir(dir)));
     for filename in dir_list:
-        print("      DEBUG:", filename);
-        folder = "./smali-"+(filename.rsplit(".", 1)[0])+"/";
-        subprocess.check_call(["java", "-jar", disassembler, "-x", "-o"+folder, dir+filename]);
-        if os.path.exists(folder+smali_to_search): return (folder, filename, dir_list[-1]);
+        debug(filename);
+        out_dir = "./smali-"+remove_ext(filename)+"/";
+        disassemble(dir+filename, out_dir);
+        if os.path.exists(out_dir+smali_to_search): return (out_dir, filename, dir_list[-1]);
     return (False, False, False);
 
 print(" *** Disassembling classes...");
 smali_to_search = "android/content/pm/PackageParser.smali";
-smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "./framework/", curdir+"/tools/baksmali.jar");
+smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "./framework/");
 
 # Check the existence of the file to patch
 if smali_folder == False:
