@@ -185,6 +185,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); sys.exit(6);  # ToDO: Notify error better
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
+    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep + "ERROR"); sys.exit(7);  # ToDO: Notify error better
     shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
