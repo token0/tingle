@@ -180,14 +180,31 @@ print(" *** Patching succeeded.");
 
 # Reassemble it
 print(" *** Reassembling classes...");
-os.makedirs("out/");
-assemble(smali_folder, "out/"+dex_filename);
-if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 
-# Put classes back into framework
+def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
+    if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); sys.exit(6);  # ToDO: Notify error better
+    smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
+    disassemble(in_dir+dex_filename_last, smali_dir_last);
+    shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
+    assemble(smali_dir, out_dir+dex_filename);
+    assemble(smali_dir_last, out_dir+dex_filename_last);
+    if sys.platform == "win32":
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename]);
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last]);
+
+os.makedirs("out/");
+try:
+    assemble(smali_folder, "out/"+dex_filename);
+    if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
+except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd, e.output.decode("utf-8")
+    if e.returncode != 2: print(os.linesep + "ERROR"); sys.exit(5);  # ToDO: Notify error better
+    print(os.linesep + "WARNING: The reassembling has failed (probably we have exceeded the 64K methods limit) but do NOT worry, we will retry." + os.linesep);
+    move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
+
+# Put classes back in the archive
 print(" *** Reassembling framework...");
-#subprocess.check_call(["zip", "-q9X", "framework.jar", "./"+dex_filename]);
-subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/"+dex_filename]);
+#subprocess.check_call(["zip", "-q9X", "framework.jar", "./out/*.dex"]);
+subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/*.dex"]);
 
 if mode == 1:
     print(" *** Rooting adbd...");
