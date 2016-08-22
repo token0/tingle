@@ -183,6 +183,7 @@ print(" *** Reassembling classes...");
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); sys.exit(6);  # ToDO: Notify error better
+    print("WARNING: Executing experimental code to move methods.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
     if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep + "ERROR"); sys.exit(7);  # ToDO: Notify error better
@@ -199,7 +200,7 @@ try:
     if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd, e.output.decode("utf-8")
     if e.returncode != 2: print(os.linesep + "ERROR"); sys.exit(5);  # ToDO: Notify error better
-    print(os.linesep + "WARNING: The reassembling has failed (probably we have exceeded the 64K methods limit) but do NOT worry, we will retry." + os.linesep);
+    print(os.linesep + "WARNING: The reassembling has failed (probably we have exceeded the 64K methods limit) but do NOT worry, we will retry.");
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
 # Backup the original file
