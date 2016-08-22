@@ -7,18 +7,18 @@ compression_program = "7za";
 if sys.platform == "win32": compression_program = curdir+"/tools/7za-w32.exe";
 if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
 
-def debug(msg):
-    print("      DEBUG:", msg);
-
-def remove_ext(filename):
-    return filename.rsplit(".", 1)[0];
-
 def program_exist(program):
     import distutils.spawn;
     if not distutils.spawn.find_executable(program):
         print(os.linesep + "ERROR: Missing executable =>", program);
         return False;
     return True;
+
+def remove_ext(filename):
+    return filename.rsplit(".", 1)[0];
+
+def debug(msg):
+    print("      DEBUG:", msg);
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
@@ -49,6 +49,14 @@ def enable_device_writing(chosen_one):
     if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep + "ERROR: Remount failed.");
         sys.exit(3);
+
+def disassemble(file, out_dir):
+    debug("Disassembling "+file);
+    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
+
+def assemble(in_dir, file):
+    debug("Assembling "+file);
+    subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
 
 # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
@@ -87,13 +95,9 @@ else:
 print(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
-def disassemble(file, out_dir):
-    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
-
 def find_smali(smali_to_search, dir):
     dir_list = tuple(sorted(os.listdir(dir)));
     for filename in dir_list:
-        debug(filename);
         out_dir = "./smali-"+remove_ext(filename)+"/";
         disassemble(dir+filename, out_dir);
         if os.path.exists(out_dir+smali_to_search): return (out_dir, filename, dir_list[-1]);
@@ -101,7 +105,7 @@ def find_smali(smali_to_search, dir):
 
 print(" *** Disassembling classes...");
 smali_to_search = "android/content/pm/PackageParser.smali";
-smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "./framework/");
+smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
 
 # Check the existence of the file to patch
 if smali_folder == False:
@@ -176,13 +180,14 @@ print(" *** Patching succeeded.");
 
 # Reassemble it
 print(" *** Reassembling classes...");
-subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o./"+dex_filename, smali_folder]);
-if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "./"+dex_filename]);
+os.makedirs("out/");
+assemble(smali_folder, "out/"+dex_filename);
+if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 
 # Put classes back into framework
 print(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "./"+dex_filename]);
-subprocess.check_output([compression_program, "a", "-y", "-tzip", "./framework.jar", "./"+dex_filename]);
+subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/"+dex_filename]);
 
 if mode == 1:
     print(" *** Rooting adbd...");
