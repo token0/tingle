@@ -202,10 +202,16 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd, e.output.decode
     print(os.linesep + "WARNING: The reassembling has failed (probably we have exceeded the 64K methods limit) but do NOT worry, we will retry." + os.linesep);
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
+# Backup the original file
+shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar.original");
+
 # Put classes back in the archive
 print(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "./out/*.dex"]);
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/*.dex"]);
+
+# Copy the patched file to the output folder
+shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar");
 
 if mode == 1:
     print(" *** Rooting adbd...");
