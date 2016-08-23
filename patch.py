@@ -62,9 +62,12 @@ def disassemble(file, out_dir):
     debug("Disassembling "+file);
     subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
 
-def assemble(in_dir, file):
+def assemble(in_dir, file, suppress_outputs = False):
     debug("Assembling "+file);
-    subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
+    if suppress_outputs:
+        subprocess.check_output(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
+    else:
+        subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
 
 # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
@@ -208,7 +211,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
 
 os.makedirs("out/");
 try:
-    assemble(smali_folder, "out/"+dex_filename);
+    assemble(smali_folder, "out/"+dex_filename, True);
     if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd, e.output.decode("utf-8")
     if e.returncode != 2: print(os.linesep + "ERROR"); exit(83);  # ToDO: Notify error better
