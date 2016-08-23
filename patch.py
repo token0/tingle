@@ -7,6 +7,10 @@ compression_program = "7za";
 if sys.platform == "win32": compression_program = "7za-w32";
 if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
 
+def exit(error_code):
+    if error_code != 0: print(os.linesep + "ERROR CODE:", error_code);
+    sys.exit(error_code);
+
 def program_exist(program):
     import distutils.spawn;
     if not distutils.spawn.find_executable(program):
@@ -29,7 +33,7 @@ def select_device():
     devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
     if devices.count(os.linesep) <= 2:
         print(os.linesep + "ERROR: No device detected! Please connect your device first.");
-        sys.exit(1);
+        exit(1);
 
     devices = devices.split(os.linesep)[1:-2];
     devices = [a.split("\t")[0] for a in devices];
@@ -46,13 +50,13 @@ def enable_device_writing(chosen_one):
     root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
         print(os.linesep + "ERROR: You do NOT have root or root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
-        sys.exit(2);
+        exit(2);
     debug(root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
     remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); debug(remount_check.rstrip());
     if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep + "ERROR: Remount failed.");
-        sys.exit(3);
+        exit(3);
 
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
@@ -76,9 +80,9 @@ else:
 os.environ["PATH"] = curdir + os.sep + "tools" + os.pathsep + os.environ["PATH"];
 
 # Check the existence of the needed components
-if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
+if not program_exist("java") or not program_exist(compression_program): exit(50);
 if mode == 1:
-    if not program_exist("adb"): sys.exit(51);
+    if not program_exist("adb"): exit(51);
     # Select device
     chosen_one = select_device();
 
@@ -89,7 +93,7 @@ dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
 
-if dumb_mode: sys.exit(0);  # ToDO: Implement full test in dumb mode
+if dumb_mode: exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
     # Pull framework somewhere temporary
@@ -117,7 +121,7 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 # Check the existence of the file to patch
 if smali_folder == False:
     print(os.linesep + "ERROR: The file to patch cannot be found, probably it is odexed.");
-    sys.exit(4);
+    exit(4);
 to_patch = smali_folder+smali_to_search;
 
 # Do the injection
@@ -177,7 +181,7 @@ elif partially_patched and not already_patched:
     print(" *** Previous failed patch attempt, not including the fillinsig method again...");
 elif already_patched:
     print(" *** This framework.jar appears to have been already patched... Exiting.");
-    sys.exit(0);
+    exit(0);
 
 f = open(to_patch, "w");
 contents = "".join(contents);
@@ -189,12 +193,12 @@ print(" *** Patching succeeded.");
 print(" *** Reassembling classes...");
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
-    if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); sys.exit(6);  # ToDO: Notify error better
+    if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); exit(6);  # ToDO: Notify error better
     print(" *** Moving methods...");
     warning("Experimental code.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
-    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep + "ERROR"); sys.exit(7);  # ToDO: Notify error better
+    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep + "ERROR"); exit(7);  # ToDO: Notify error better
     shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
@@ -207,7 +211,7 @@ try:
     assemble(smali_folder, "out/"+dex_filename);
     if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd, e.output.decode("utf-8")
-    if e.returncode != 2: print(os.linesep + "ERROR"); sys.exit(5);  # ToDO: Notify error better
+    if e.returncode != 2: print(os.linesep + "ERROR"); exit(5);  # ToDO: Notify error better
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)");
     warning("but do NOT worry, we will retry.", False);
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
