@@ -4,7 +4,7 @@ import os, sys, platform, subprocess, tempfile, shutil;
 dumb_mode = False;
 curdir = os.getcwd();
 compression_program = "7za";
-if sys.platform == "win32": compression_program = curdir+"/tools/7za-w32.exe";
+if sys.platform == "win32": compression_program = "7za-w32";
 if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
 
 def program_exist(program):
@@ -71,6 +71,9 @@ if not dumb_mode:
     mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
 else:
     mode = 2;
+
+# Search in the tools folder before any other folder
+os.environ["PATH"] = curdir + os.sep + "tools" + os.pathsep + os.environ["PATH"];
 
 # Check the existence of the needed components
 if not program_exist("java") or not program_exist(compression_program): sys.exit(50);
