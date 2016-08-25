@@ -31,10 +31,15 @@ def warning(msg, first_line = True):
 def input_byte(msg): 
     sys.stdout.write(msg);
     sys.stdout.flush();
-    return sys.stdin.readline().strip()[0];
+    return sys.stdin.readline().strip()[:1];
 
-def user_question(msg):
-    return int(input_byte(msg + os.linesep + "> "));
+def user_question(msg, default_value = 1):
+    value = input_byte(msg + os.linesep + "> ");
+    try:
+        return int(value);
+    except Exception:
+        if getattr(sys, "exc_clear", None) is not None: sys.exc_clear();
+    return default_value;
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
