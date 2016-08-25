@@ -28,6 +28,14 @@ def warning(msg, first_line = True):
     if first_line: print("      WARNING:", msg);
     else:  print("              ", msg);
 
+def input_byte(msg): 
+    sys.stdout.write(msg);
+    sys.stdout.flush();
+    return sys.stdin.readline().strip()[0];
+
+def user_question(msg):
+    return int(input_byte(msg + os.linesep + "> "));
+
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
     devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
@@ -40,8 +48,8 @@ def select_device():
 
     if len(devices) > 1:
         print("Enter id of device to target:" + os.linesep);
-        id = input("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep + os.linesep + "> ");
-        chosen_one = devices[int(id)-1];
+        id = user_question("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep);
+        chosen_one = devices[id-1];
     else:
         chosen_one = devices[0];
     return chosen_one;
@@ -61,6 +69,7 @@ def enable_device_writing(chosen_one):
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
     subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
+    return True;
 
 def assemble(in_dir, file, suppress_outputs = False):
     debug("Assembling "+file);
@@ -75,7 +84,7 @@ if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
 if not dumb_mode:
     print("Where do you want to take the file to patch?" + os.linesep);
-    mode = int(input("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep + os.linesep + "> "));
+    mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep);
 else:
     mode = 2;
 
