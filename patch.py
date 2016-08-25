@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import os, sys, platform, subprocess, tempfile, shutil;
 
-dumb_mode = False;
+DUMB_MODE = False;
 curdir = os.getcwd();
 compression_program = "7za";
 if sys.platform == "win32": compression_program = "7za-w32";
-if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): dumb_mode = True;
+if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): DUMB_MODE = True;
 
 def exit(error_code):
     if error_code != 0: print(os.linesep + "ERROR CODE:", error_code);
@@ -31,6 +31,7 @@ def warning(msg, first_line = True):
 def input_byte(msg): 
     sys.stdout.write(msg);
     sys.stdout.flush();
+    if DUMB_MODE: return None;
     return sys.stdin.readline().strip()[:1];
 
 def user_question(msg, default_value = 1):
@@ -87,11 +88,8 @@ def assemble(in_dir, file, suppress_outputs = False):
 def on_exit(): import msvcrt; msvcrt.getch();
 if sys.platform == "win32": import atexit; atexit.register(on_exit);
 
-if not dumb_mode:
-    print("Where do you want to take the file to patch?" + os.linesep);
-    mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep);
-else:
-    mode = 2;
+print("Where do you want to take the file to patch?" + os.linesep);
+mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep, 2);
 
 # Search in the tools folder before any other folder
 os.environ["PATH"] = curdir + os.sep + "tools" + os.pathsep + os.environ["PATH"];
@@ -110,7 +108,7 @@ dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print(" *** Working dir: %s" % dirpath);
 
-if dumb_mode: exit(0);  # ToDO: Implement full test in dumb mode
+if DUMB_MODE: exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
     # Pull framework somewhere temporary
