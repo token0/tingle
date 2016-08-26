@@ -77,12 +77,11 @@ def disassemble(file, out_dir):
     subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
     return True;
 
-def assemble(in_dir, file, suppress_outputs = False):
+def assemble(in_dir, file, hide_output = False):
     debug("Assembling "+file);
-    if suppress_outputs:
-        subprocess.check_output(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
-    else:
-        subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
+    if hide_output: return subprocess.check_output(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
+    subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
+    return True;
 
 # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
 def on_exit(): import msvcrt; msvcrt.getch();
