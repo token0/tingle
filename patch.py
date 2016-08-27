@@ -16,18 +16,16 @@ def exit(error_code):
     if error_code != 0: print(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
 
-def program_exist(program, find_exec):
-    if not find_exec(program):
-        print(os.linesep+"ERROR: Missing executable =>", program);
-        return False;
-    return True;
-
-# Check the existence of the needed components
 def verify_dependencies(mode):
-    import distutils.spawn;
-    find_exec = distutils.spawn.find_executable;
-    if not program_exist("java", find_exec) or not program_exist(compression_program, find_exec): exit(65);
-    if mode == 1 and not program_exist("adb", find_exec): exit(66);
+    from distutils.spawn import find_executable;
+    def exec_exists(exec_name):
+        if find_executable(exec_name):
+            return True;
+        print(os.linesep+"ERROR: Missing executable =>", exec_name);
+        return False;
+
+    if not exec_exists("java") or not exec_exists(compression_program): exit(65);
+    if mode == 1 and not exec_exists("adb"): exit(66);
 
 def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
@@ -116,6 +114,7 @@ mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the 
 # Search in the tools folder before any other folder
 os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ["PATH"];
 
+# Check the presence of the needed components
 verify_dependencies(mode);
 
 # Select device
