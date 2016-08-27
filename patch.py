@@ -6,6 +6,9 @@ import tempfile;
 import shutil;
 import atexit;
 
+import libs.compat as CompatLayer;
+CompatLayer.subprocess();
+
 DUMB_MODE = False;
 curdir = os.getcwd();
 compression_program = "7za";
