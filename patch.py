@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys;
-import os
+import os;
 import subprocess;
 import tempfile;
 import shutil;
