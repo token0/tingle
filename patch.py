@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import os, sys, platform, subprocess, tempfile, shutil;
+import os, sys, subprocess, tempfile, shutil;
+import atexit;
 
 DUMB_MODE = False;
 curdir = os.getcwd();
@@ -11,12 +12,19 @@ def exit(error_code):
     if error_code != 0: print(os.linesep + "ERROR CODE:", error_code);
     sys.exit(error_code);
 
-def program_exist(program):
-    import distutils.spawn;
-    if not distutils.spawn.find_executable(program):
+def program_exist(program, find_exec):
+    if not find_exec(program):
         print(os.linesep + "ERROR: Missing executable =>", program);
         return False;
     return True;
+
+# Check the existence of the needed components
+def verify_dependencies(mode):
+    import distutils.spawn;
+    find_exec = distutils.spawn.find_executable;
+    if not program_exist("java", find_exec) or not program_exist(compression_program, find_exec): exit(65);
+    if mode == 1:
+        if not program_exist("adb", find_exec): exit(66);
 
 def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
@@ -27,6 +35,10 @@ def debug(msg):
 def warning(msg, first_line = True):
     if first_line: print("      WARNING:", msg);
     else:  print("              ", msg);
+
+def get_OS():
+    import platform;
+    return platform.system() + " " + platform.release();
 
 def input_byte(msg): 
     sys.stdout.write(msg);
@@ -63,11 +75,13 @@ def select_device():
 def enable_device_writing(chosen_one):
     root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
-        print(os.linesep + "ERROR: You do NOT have root or root access is disabled." + os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
+        print(os.linesep + "ERROR: You do NOT have root or root access is disabled.");
+        print(os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         exit(80);
     debug(root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
-    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8"); debug(remount_check.rstrip());
+    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
+    debug(remount_check.rstrip());
     if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep + "ERROR: Remount failed.");
         exit(81);
@@ -83,9 +97,11 @@ def assemble(in_dir, file, hide_output = False):
     subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
     return True;
 
-# Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
-def on_exit(): import msvcrt; msvcrt.getch();
-if sys.platform == "win32": import atexit; atexit.register(on_exit);
+def on_exit():
+    # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
+    if sys.platform == "win32": import msvcrt; msvcrt.getch();
+
+atexit.register(on_exit);
 
 print("Where do you want to take the file to patch?" + os.linesep);
 mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep, 2);
@@ -93,14 +109,12 @@ mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From th
 # Search in the tools folder before any other folder
 os.environ["PATH"] = curdir + os.sep + "tools" + os.pathsep + os.environ["PATH"];
 
-# Check the existence of the needed components
-if not program_exist("java") or not program_exist(compression_program): exit(65);
-if mode == 1:
-    if not program_exist("adb"): exit(66);
-    # Select device
-    chosen_one = select_device();
+verify_dependencies(mode);
 
-print(os.linesep + " *** OS:", platform.system(), platform.release(), "(" + sys.platform + ")");
+# Select device
+if mode == 1: chosen_one = select_device();
+
+print(os.linesep + " *** OS:", get_OS(), "(" + sys.platform + ")");
 if mode == 1: print(" *** Selected device:", chosen_one);
 
 dirpath = tempfile.mkdtemp();
