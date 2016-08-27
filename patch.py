@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-import os, sys, subprocess, tempfile, shutil;
+import sys;
+import os
+import subprocess;
+import tempfile;
+import shutil;
 import atexit;
 
 DUMB_MODE = False;
@@ -9,12 +13,12 @@ if sys.platform == "win32": compression_program = "7za-w32";
 if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): DUMB_MODE = True;
 
 def exit(error_code):
-    if error_code != 0: print(os.linesep + "ERROR CODE:", error_code);
+    if error_code != 0: print(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
 
 def program_exist(program, find_exec):
     if not find_exec(program):
-        print(os.linesep + "ERROR: Missing executable =>", program);
+        print(os.linesep+"ERROR: Missing executable =>", program);
         return False;
     return True;
 
@@ -23,8 +27,7 @@ def verify_dependencies(mode):
     import distutils.spawn;
     find_exec = distutils.spawn.find_executable;
     if not program_exist("java", find_exec) or not program_exist(compression_program, find_exec): exit(65);
-    if mode == 1:
-        if not program_exist("adb", find_exec): exit(66);
+    if mode == 1 and not program_exist("adb", find_exec): exit(66);
 
 def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
@@ -33,12 +36,14 @@ def debug(msg):
     print("      DEBUG:", msg);
 
 def warning(msg, first_line = True):
-    if first_line: print("      WARNING:", msg);
-    else:  print("              ", msg);
+    if first_line:
+        print("      WARNING:", msg);
+    else:
+        print("              ", msg);
 
 def get_OS():
     import platform;
-    return platform.system() + " " + platform.release();
+    return platform.system()+" "+platform.release();
 
 def input_byte(msg): 
     sys.stdout.write(msg);
@@ -47,7 +52,7 @@ def input_byte(msg):
     return sys.stdin.readline().strip()[:1];
 
 def user_question(msg, default_value = 1):
-    value = input_byte(msg + os.linesep + "> ");
+    value = input_byte(msg+os.linesep+"> ");
     try:
         return int(value);
     except Exception:
@@ -58,15 +63,15 @@ def select_device():
     subprocess.check_output(["adb", "start-server"]);
     devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
     if devices.count(os.linesep) <= 2:
-        print(os.linesep + "ERROR: No device detected! Please connect your device first.");
+        print(os.linesep+"ERROR: No device detected! Please connect your device first.");
         exit(0);
 
     devices = devices.split(os.linesep)[1:-2];
     devices = [a.split("\t")[0] for a in devices];
 
     if len(devices) > 1:
-        print("Enter id of device to target:" + os.linesep);
-        id = user_question("\t" + (os.linesep + "\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + os.linesep);
+        print("Enter id of device to target:"+os.linesep);
+        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)])+os.linesep);
         chosen_one = devices[id-1];
     else:
         chosen_one = devices[0];
@@ -75,15 +80,15 @@ def select_device():
 def enable_device_writing(chosen_one):
     root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
-        print(os.linesep + "ERROR: You do NOT have root or root access is disabled.");
-        print(os.linesep + "Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
+        print(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
+        print(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         exit(80);
     debug(root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
     remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
     debug(remount_check.rstrip());
     if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
-        print(os.linesep + "ERROR: Remount failed.");
+        print(os.linesep+"ERROR: Remount failed.");
         exit(81);
 
 def disassemble(file, out_dir):
@@ -99,22 +104,24 @@ def assemble(in_dir, file, hide_output = False):
 
 def on_exit():
     # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
-    if sys.platform == "win32": import msvcrt; msvcrt.getch();
+    if sys.platform == "win32":
+        import msvcrt;
+        msvcrt.getch();
 
 atexit.register(on_exit);
 
 print("Where do you want to take the file to patch?" + os.linesep);
-mode = user_question("\t1 - From the device (adb)" + os.linesep + "\t2 - From the input folder" + os.linesep, 2);
+mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
 
 # Search in the tools folder before any other folder
-os.environ["PATH"] = curdir + os.sep + "tools" + os.pathsep + os.environ["PATH"];
+os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ["PATH"];
 
 verify_dependencies(mode);
 
 # Select device
 if mode == 1: chosen_one = select_device();
 
-print(os.linesep + " *** OS:", get_OS(), "(" + sys.platform + ")");
+print(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
 if mode == 1: print(" *** Selected device:", chosen_one);
 
 dirpath = tempfile.mkdtemp();
@@ -128,7 +135,7 @@ if mode == 1:
     print(" *** Pulling framework from device...");
     subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 else:
-    shutil.copy2(curdir + "/input/framework.jar", dirpath + "/");
+    shutil.copy2(curdir+"/input/framework.jar", dirpath+"/");
 
 # Disassemble it
 print(" *** Disassembling framework...");
@@ -148,7 +155,7 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 
 # Check the existence of the file to patch
 if smali_folder == False:
-    print(os.linesep + "ERROR: The file to patch cannot be found, probably it is odexed.");
+    print(os.linesep+"ERROR: The file to patch cannot be found, probably it is odexed.");
     exit(82);
 to_patch = smali_folder+smali_to_search;
 
@@ -221,12 +228,12 @@ print(" *** Patching succeeded.");
 print(" *** Reassembling classes...");
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
-    if(dex_filename == dex_filename_last): print(os.linesep + "ERROR"); exit(84);  # ToDO: Notify error better
+    if(dex_filename == dex_filename_last): print(os.linesep+"ERROR"); exit(84);  # ToDO: Notify error better
     print(" *** Moving methods...");
     warning("Experimental code.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
-    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep + "ERROR"); exit(85);  # ToDO: Notify error better
+    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep+"ERROR"); exit(85);  # ToDO: Notify error better
     shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
@@ -239,7 +246,9 @@ try:
     assemble(smali_folder, "out/"+dex_filename, True);
     if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
-    if e.returncode != 2: print(os.linesep + e.output.decode("utf-8").strip()); exit(83);
+    if e.returncode != 2:
+        print(os.linesep+e.output.decode("utf-8").strip());
+        exit(83);
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)");
     warning("but do NOT worry, we will retry.", False);
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
