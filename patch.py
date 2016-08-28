@@ -143,6 +143,11 @@ else:
 print(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
+if not os.path.exists("framework/"):
+    print(os.linesep+"ERROR: No dex file(s) found, probably your file is odexed.");
+    exit(86);
+
+print(" *** Disassembling classes...");
 def find_smali(smali_to_search, dir):
     dir_list = tuple(sorted(os.listdir(dir)));
     for filename in dir_list:
@@ -151,7 +156,6 @@ def find_smali(smali_to_search, dir):
         if os.path.exists(out_dir+smali_to_search): return (out_dir, filename, dir_list[-1]);
     return (False, False, False);
 
-print(" *** Disassembling classes...");
 smali_to_search = "android/content/pm/PackageParser.smali";
 smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
 
