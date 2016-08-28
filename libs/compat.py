@@ -1,7 +1,23 @@
 #!/usr/bin/env python
 
 # Compatibility layer
-def subprocess():
+def fix_builtins():
+    def _sorted(list):
+        list.sort();
+        return list;
+
+    try:
+        if __builtins__.get("sorted") is None:
+            __builtins__.update(sorted=_sorted);
+    except AttributeError:
+        try:
+            import builtins;
+        except ImportError:
+            import __builtin__ as builtins;
+        if getattr(builtins, "sorted", None) == None:
+            builtins.sorted=_sorted;
+
+def fix_subprocess():
     import subprocess;
 
     class _ExtendedCalledProcessError(subprocess.CalledProcessError):
@@ -33,3 +49,7 @@ def subprocess():
         from subprocess import check_output;
     except ImportError:
         subprocess.check_output = _check_output;
+
+def fix_all(override_all=False):
+    fix_builtins();
+    fix_subprocess();
