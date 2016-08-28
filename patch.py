@@ -252,6 +252,7 @@ try:
     assemble(smali_folder, "out/"+dex_filename, True);
     if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
+    os.remove(dirpath+"/out/"+dex_filename);  # Remove incomplete file
     if e.returncode != 2:
         print(os.linesep+e.output.decode("utf-8").strip());
         exit(83);
