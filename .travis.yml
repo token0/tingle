@@ -34,4 +34,4 @@ addons:
       - p7zip-full
 
 install: true
-script: python test.py
+script: python patch.py
