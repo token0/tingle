@@ -1,21 +1,37 @@
 sudo: false
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "pypy"
+
 env:
-  - RUN_TYPE="dumb"
+  global: TERM=dumb
+
+matrix:
+  include:
+    - os: linux
+      python: "2.6"
+      env: TOXENV=py26
+    - os: linux
+      python: "3.2"
+      env: TOXENV=py32
+    - os: linux
+      python: "nightly"
+      env: TOXENV=py-nightly
+    - os: linux
+      python: "pypy"
+      env: TOXENV=pypy
+    - os: linux
+      python: "pypy3"
+      env: TOXENV=pypy3
+    - os: osx
+      language: generic
+      env: TOXENV=py-default
+  allow_failures:
+    - os: osx
+  fast_finish: true
+
 addons:
   apt:
     packages:
       - p7zip-full
 
 install: true
-
-script:
-  - nosetests
-  - python patch.py
+script: python test.py
