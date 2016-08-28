@@ -1,4 +1,5 @@
-# Framework Patcher for Android
+# Tingle (framework patcher for Android)
+[![Build Status](https://travis-ci.org/ale5000-git/tingle.svg?branch=master)](https://travis-ci.org/ale5000-git/tingle)
 
 ## What this does
 If you have a rooted phone, this will allow you to patch the android system and inject features without needing to recompile the OS or install Xposed.
