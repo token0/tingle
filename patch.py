@@ -7,7 +7,7 @@ import shutil;
 import atexit;
 
 import libs.compat as CompatLayer;
-CompatLayer.subprocess();
+CompatLayer.fix_all();
 
 DUMB_MODE = False;
 curdir = os.getcwd();
