@@ -13,7 +13,7 @@ DUMB_MODE = False;
 curdir = os.getcwd();
 compression_program = "7za";
 if sys.platform == "win32": compression_program = "7za-w32";
-if ("RUN_TYPE" in os.environ) and (os.environ["RUN_TYPE"] == "dumb"): DUMB_MODE = True;
+if("TERM" in os.environ) and (os.environ["TERM"] == "dumb"): DUMB_MODE = True;
 
 def exit(error_code):
     if error_code != 0: print(os.linesep+"ERROR CODE:", error_code);
@@ -88,7 +88,7 @@ def enable_device_writing(chosen_one):
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
     remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
     debug(remount_check.rstrip());
-    if ("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
+    if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print(os.linesep+"ERROR: Remount failed.");
         exit(81);
 
