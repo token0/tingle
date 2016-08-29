@@ -125,6 +125,7 @@ verify_dependencies(mode);
 if mode == 1: chosen_one = select_device();
 
 print(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
+print(" *** Mode:", mode);
 if mode == 1: print(" *** Selected device:", chosen_one);
 
 dirpath = tempfile.mkdtemp();
