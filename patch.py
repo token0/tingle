@@ -6,11 +6,13 @@ import tempfile;
 import shutil;
 import atexit;
 
-import libs.compat as CompatLayer;
-CompatLayer.fix_all();
+curdir = os.getcwd();
+sys.path.insert(1, curdir+os.sep+"libs");
+
+import compat;
+compat.fix_all();
 
 DUMB_MODE = False;
-curdir = os.getcwd();
 compression_program = "7za";
 if sys.platform == "win32": compression_program = "7za-w32";
 if("TERM" in os.environ) and (os.environ["TERM"] == "dumb"): DUMB_MODE = True;
