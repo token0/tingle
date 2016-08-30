@@ -239,14 +239,19 @@ print(" *** Patching succeeded.");
 # Reassemble it
 print(" *** Reassembling classes...");
 
+def safe_move(orig, dest):
+    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
+        print(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
+        exit(85);
+    shutil.move(orig, dest);
+
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     if(dex_filename == dex_filename_last): print(os.linesep+"ERROR"); exit(84);  # ToDO: Notify error better
     print(" *** Moving methods...");
     warning("Experimental code.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
-    if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep+"ERROR"); exit(85);  # ToDO: Notify error better
-    shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
+    safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
     print(" *** Reassembling classes...");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
