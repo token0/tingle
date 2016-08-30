@@ -245,6 +245,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     disassemble(in_dir+dex_filename_last, smali_dir_last);
     if os.path.exists(smali_dir_last+"android/drm"): print(os.linesep+"ERROR"); exit(85);  # ToDO: Notify error better
     shutil.move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
+    print(" *** Reassembling classes...");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
     if sys.platform == "win32":
