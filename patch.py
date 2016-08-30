@@ -49,7 +49,9 @@ def get_OS():
 def input_byte(msg): 
     sys.stdout.write(msg);
     sys.stdout.flush();
-    if DUMB_MODE: return None;
+    if DUMB_MODE:
+        print();
+        return None;
     return sys.stdin.readline().strip()[:1];
 
 def user_question(msg, default_value=1):
