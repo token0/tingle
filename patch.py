@@ -97,7 +97,7 @@ def enable_device_writing(chosen_one):
 
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
-    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-x", "-o"+out_dir, file]);
+    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
     return True;
 
 def assemble(in_dir, file, hide_output = False):
