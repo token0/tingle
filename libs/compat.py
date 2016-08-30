@@ -2,20 +2,23 @@
 
 # Compatibility layer
 def fix_builtins():
+    override_dict = {};
     def _sorted(list):
         list.sort();
         return list;
 
-    try:
-        if __builtins__.get("sorted") is None:
-            __builtins__.update(sorted=_sorted);
-    except AttributeError:
+    if(__builtins__.__class__ is dict):
+        builtins_dict = __builtins__;
+    else:
         try:
             import builtins;
         except ImportError:
             import __builtin__ as builtins;
-        if getattr(builtins, "sorted", None) == None:
-            builtins.sorted=_sorted;
+        builtins_dict = builtins.__dict__;
+
+    if builtins_dict.get("sorted") is None:
+        override_dict["sorted"] = _sorted;
+    builtins_dict.update(override_dict);
 
 def fix_subprocess():
     import subprocess;
