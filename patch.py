@@ -7,7 +7,11 @@ import shutil;
 import atexit;
 
 curdir = os.getcwd();
+
+# Insert the libraries folder in the search path before any other folder
 sys.path.insert(1, curdir+os.sep+"libs");
+# Search the tool to execute (from subprocess) in the tools folder before any other folder
+os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
 import compat;
 compat.fix_all();
@@ -118,9 +122,6 @@ atexit.register(on_exit);
 
 print("Where do you want to take the file to patch?" + os.linesep);
 mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
-
-# Search in the tools folder before any other folder
-os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
 # Check the presence of the needed components
 verify_dependencies(mode);
