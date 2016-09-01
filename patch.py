@@ -24,7 +24,7 @@ def exit(error_code):
 def verify_dependencies(mode):
     from distutils.spawn import find_executable;
     def exec_exists(exec_name):
-        if find_executable(exec_name):
+        if find_executable(exec_name) is not None:
             return True;
         print(os.linesep+"ERROR: Missing executable =>", exec_name);
         return False;
