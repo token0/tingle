@@ -1,6 +1,8 @@
-#!/usr/bin/env python
-
 # Compatibility layer
+#
+# Copyright © 2016  ale5000
+# License: LGPLv3+
+
 def fix_builtins():
     override_dict = {};
     def _sorted(list):
