@@ -1,6 +1,6 @@
 # Compatibility layer
 #
-# Copyright © 2016  ale5000
+# Copyright (C) 2016  ale5000
 # License: LGPLv3+
 
 def fix_builtins():
