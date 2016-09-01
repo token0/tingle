@@ -120,7 +120,7 @@ print("Where do you want to take the file to patch?" + os.linesep);
 mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
 
 # Search in the tools folder before any other folder
-os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ["PATH"];
+os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
 # Check the presence of the needed components
 verify_dependencies(mode);
