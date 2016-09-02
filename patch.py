@@ -299,5 +299,7 @@ if mode == 1:
     # Push to device
     print(" *** Pushing changes to the device...");
     subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+    # Kill ADB server
+    subprocess.check_call(["adb", "kill-server"]);
 
 print(" *** All done! :)");
