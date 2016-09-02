@@ -13,8 +13,8 @@ sys.path.insert(1, curdir+os.sep+"libs");
 # Search the tool to execute (from subprocess) in the tools folder before any other folder
 os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
-import compat;
-compat.fix_all();
+import compatlayer;
+compatlayer.fix_all();
 
 DUMB_MODE = False;
 compression_program = "7za";
