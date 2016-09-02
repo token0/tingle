@@ -6,20 +6,19 @@ import tempfile;
 import shutil;
 import atexit;
 
+DUMB_MODE = False;
 curdir = os.getcwd();
+compression_program = "7za";
 
-# Insert the libraries folder in the search path before any other folder
 sys.path.insert(1, curdir+os.sep+"libs");
+import compatlayer;
+
+compatlayer.fix_all();
+if os.environ.get("TERM") == "dumb": DUMB_MODE = True;
+if sys.platform == "win32": compression_program = "7za-w32";
+
 # Search the tool to execute (from subprocess) in the tools folder before any other folder
 os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
-
-import compatlayer;
-compatlayer.fix_all();
-
-DUMB_MODE = False;
-compression_program = "7za";
-if sys.platform == "win32": compression_program = "7za-w32";
-if("TERM" in os.environ) and (os.environ["TERM"] == "dumb"): DUMB_MODE = True;
 
 def on_exit():
     # Return to the script folder
@@ -287,8 +286,8 @@ shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar.original");
 
 # Put classes back in the archive
 print_(" *** Reassembling framework...");
-#subprocess.check_call(["zip", "-q9X", "framework.jar", "./out/*.dex"]);
-subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/*.dex"]);
+#subprocess.check_call(["zip", "-q9X", "framework.jar", os.curdir+"/out/*.dex"]);
+subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
 
 # Copy the patched file to the output folder
 shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar");
