@@ -1,13 +1,13 @@
 # Compatibility layer
 #
 # Copyright (C) 2016  ale5000
-# License: LGPLv3+
+# License: GNU Lesser General Public License v3+
 
 def fix_builtins():
+    import sys;
     override_dict = {};
-    def _sorted(list):
-        list.sort();
-        return list;
+    orig_print = None;
+    used_print = None;
 
     if(__builtins__.__class__ is dict):
         builtins_dict = __builtins__;
@@ -18,9 +18,44 @@ def fix_builtins():
             import __builtin__ as builtins;
         builtins_dict = builtins.__dict__;
 
+    def _print_wrapper(*args, **kwargs):
+        flush = kwargs.get("flush", False);
+        if "flush" in kwargs: del kwargs["flush"];
+        orig_print(*args, **kwargs);
+        if flush: kwargs.get("file", sys.stdout).flush();
+
+    def _print_full(*args, **kwargs):
+        opt = {"sep": " ", "end": "\n", "file": sys.stdout, "flush": False};
+        for key in kwargs:
+            if(key in opt):
+                opt[key] = kwargs[key];
+            else:
+                raise TypeError("'"+key+"' is an invalid keyword argument for this function");
+        opt["file"].write(opt["sep"].join(str(val) for val in args)+opt["end"]);
+        if opt["flush"]:
+            opt["file"].flush();
+
+    def _sorted(list):
+        list.sort();
+        return list;
+
+    # Function 'print' (also aliased as print_)
+    if sys.version_info >= (3, 3):
+        used_print = builtins_dict.get("print");
+    else:
+        orig_print = builtins_dict.get("print");
+        if orig_print is not None:
+            used_print = _print_wrapper;
+        else:
+            used_print = _print_full;
+        override_dict["print"] = used_print;
+    override_dict["print_"] = used_print;
+    # Function 'sorted'
     if builtins_dict.get("sorted") is None:
         override_dict["sorted"] = _sorted;
+
     builtins_dict.update(override_dict);
+    del override_dict;
 
 def fix_subprocess():
     import subprocess;
