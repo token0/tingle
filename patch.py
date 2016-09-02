@@ -7,22 +7,23 @@ import shutil;
 import atexit;
 
 DUMB_MODE = False;
-curdir = os.getcwd();
+PREVIOUS_DIR = os.getcwd();
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
 compression_program = "7za";
 
-sys.path.insert(1, curdir+os.sep+"libs");
+sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
 import compatlayer;
 
 compatlayer.fix_all();
 if os.environ.get("TERM") == "dumb": DUMB_MODE = True;
 if sys.platform == "win32": compression_program = "7za-w32";
 
-# Search the tool to execute (from subprocess) in the tools folder before any other folder
-os.environ["PATH"] = curdir+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
+# Add the tools folder in the search path (used from subprocess), take precedence over system folders
+os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
 def on_exit():
-    # Return to the script folder
-    os.chdir(curdir);
+    # Return to the previous working directory
+    os.chdir(PREVIOUS_DIR);
     # Clean up
     #shutil.rmtree(dirpath);
     if sys.platform == "win32" and not DUMB_MODE:
@@ -116,13 +117,13 @@ def enable_device_writing(chosen_one):
 
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
-    subprocess.check_call(["java", "-jar", curdir+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
+    subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
     return True;
 
 def assemble(in_dir, file, hide_output = False):
     debug("Assembling "+file);
-    if hide_output: return subprocess.check_output(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
-    subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
+    if hide_output: return subprocess.check_output(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
+    subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir]);
     return True;
 
 # Register exit handler
@@ -152,7 +153,7 @@ if mode == 1:
     print_(" *** Pulling framework from device...");
     subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 else:
-    shutil.copy2(curdir+"/input/framework.jar", dirpath+"/");
+    shutil.copy2(SCRIPT_DIR+"/input/framework.jar", dirpath+"/");
 
 # Disassemble it
 print_(" *** Disassembling framework...");
@@ -186,7 +187,7 @@ f = open(to_patch, "r");
 old_contents = f.readlines();
 f.close();
 
-f = open(curdir+"/fillinsig.smali", "r");
+f = open(SCRIPT_DIR+"/fillinsig.smali", "r");
 fillinsig = f.readlines();
 f.close();
 
@@ -282,7 +283,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
 # Backup the original file
-shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar.original");
+shutil.copy2(dirpath+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
 
 # Put classes back in the archive
 print_(" *** Reassembling framework...");
@@ -290,7 +291,7 @@ print_(" *** Reassembling framework...");
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
 
 # Copy the patched file to the output folder
-shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar");
+shutil.copy2(dirpath+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
     print_(" *** Rooting adbd...");
