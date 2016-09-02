@@ -61,13 +61,18 @@ def input_byte(msg):
     return sys.stdin.readline().strip()[:1];
 
 def user_question(msg, default_value=1):
-    value = input_byte(msg+os.linesep+"> ");
     try:
-        return int(value);
-    except Exception:
-        if getattr(sys, "exc_clear", None) is not None: sys.exc_clear();
-    print("Used default value.");
-    return default_value;
+        value = input_byte(msg+os.linesep+"> ");
+        try:
+            return int(value);
+        except ValueError:
+            import time;
+            time.sleep(0.05);  # Give some time for the KeyboardInterrupt to being catched, if needed
+            print("Used default value.");
+            return default_value;
+    except KeyboardInterrupt:
+        print(os.linesep+os.linesep+"Killed by user, now exiting ;)");
+        sys.exit(0);
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
