@@ -31,7 +31,7 @@ def on_exit():
         msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
 
 def exit(error_code):
-    if error_code != 0: print(os.linesep+"ERROR CODE:", error_code);
+    if error_code != 0: print_(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
 
 def verify_dependencies(mode):
@@ -39,7 +39,7 @@ def verify_dependencies(mode):
     def exec_exists(exec_name):
         if find_executable(exec_name) is not None:
             return True;
-        print(os.linesep+"ERROR: Missing executable =>", exec_name);
+        print_(os.linesep+"ERROR: Missing executable =>", exec_name);
         return False;
 
     if not exec_exists("java") or not exec_exists(compression_program): exit(65);
@@ -49,13 +49,13 @@ def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
 
 def debug(msg):
-    print("      DEBUG:", msg);
+    print_("      DEBUG:", msg);
 
 def warning(msg, first_line = True):
     if first_line:
-        print("      WARNING:", msg);
+        print_("      WARNING:", msg);
     else:
-        print("              ", msg);
+        print_("              ", msg);
 
 def get_OS():
     import platform;
@@ -65,7 +65,7 @@ def input_byte(msg):
     sys.stdout.write(msg);
     sys.stdout.flush();
     if DUMB_MODE:
-        print();
+        print_();
         return "";
     return sys.stdin.readline().strip()[:1];
 
@@ -77,24 +77,24 @@ def user_question(msg, default_value=1):
         except ValueError:
             import time;
             time.sleep(0.05);  # Give some time for the KeyboardInterrupt to being catched, if needed
-            print("Used default value.");
+            print_("Used default value.");
             return default_value;
     except KeyboardInterrupt:
-        print(os.linesep+os.linesep+"Killed by user, now exiting ;)");
+        print_(os.linesep+os.linesep+"Killed by user, now exiting ;)");
         sys.exit(0);
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
     devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
     if devices.count(os.linesep) <= 2:
-        print(os.linesep+"ERROR: No device detected! Please connect your device first.");
+        print_(os.linesep+"ERROR: No device detected! Please connect your device first.");
         exit(0);
 
     devices = devices.split(os.linesep)[1:-2];
     devices = [a.split("\t")[0] for a in devices];
 
     if len(devices) > 1:
-        print("Enter id of device to target:"+os.linesep);
+        print_("Enter id of device to target:"+os.linesep);
         id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)])+os.linesep);
         chosen_one = devices[id-1];
     else:
@@ -104,15 +104,15 @@ def select_device():
 def enable_device_writing(chosen_one):
     root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
-        print(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
-        print(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
+        print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
+        print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         exit(80);
     debug(root_check.rstrip());
     subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
     remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
     debug(remount_check.rstrip());
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
-        print(os.linesep+"ERROR: Remount failed.");
+        print_(os.linesep+"ERROR: Remount failed.");
         exit(81);
 
 def disassemble(file, out_dir):
@@ -129,7 +129,7 @@ def assemble(in_dir, file, hide_output = False):
 # Register exit handler
 atexit.register(on_exit);
 
-print("Where do you want to take the file to patch?" + os.linesep);
+print_("Where do you want to take the file to patch?" + os.linesep);
 mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
 
 # Check the presence of the needed components
@@ -138,32 +138,32 @@ verify_dependencies(mode);
 # Select device
 if mode == 1: chosen_one = select_device();
 
-print(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
-print(" *** Mode:", mode);
-if mode == 1: print(" *** Selected device:", chosen_one);
+print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
+print_(" *** Mode:", mode);
+if mode == 1: print_(" *** Selected device:", chosen_one);
 
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
-print(" *** Working dir: %s" % dirpath);
+print_(" *** Working dir: %s" % dirpath);
 
 if DUMB_MODE: exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
     # Pull framework somewhere temporary
-    print(" *** Pulling framework from device...");
+    print_(" *** Pulling framework from device...");
     subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
 else:
     shutil.copy2(curdir+"/input/framework.jar", dirpath+"/");
 
 # Disassemble it
-print(" *** Disassembling framework...");
+print_(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
 if not os.path.exists("framework/"):
-    print(os.linesep+"ERROR: No dex file(s) found, probably your file is odexed.");
+    print_(os.linesep+"ERROR: No dex file(s) found, probably your file is odexed.");
     exit(86);
 
-print(" *** Disassembling classes...");
+print_(" *** Disassembling classes...");
 def find_smali(smali_to_search, dir):
     dir_list = tuple(sorted(os.listdir(dir)));
     for filename in dir_list:
@@ -177,12 +177,12 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 
 # Check the existence of the file to patch
 if smali_folder == False:
-    print(os.linesep+"ERROR: The file to patch cannot be found, probably it is odexed.");
+    print_(os.linesep+"ERROR: The file to patch cannot be found, probably it is odexed.");
     exit(82);
 to_patch = smali_folder+smali_to_search;
 
 # Do the injection
-print(" *** Patching...");
+print_(" *** Patching...");
 f = open(to_patch, "r");
 old_contents = f.readlines();
 f.close();
@@ -235,34 +235,34 @@ while i < len(old_contents):
 if not already_patched and not partially_patched:
     contents.extend(fillinsig);
 elif partially_patched and not already_patched:
-    print(" *** Previous failed patch attempt, not including the fillinsig method again...");
+    print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
 elif already_patched:
-    print(" *** This framework.jar appears to have been already patched... Exiting.");
+    print_(" *** This framework.jar appears to have been already patched... Exiting.");
     exit(0);
 
 f = open(to_patch, "w");
 contents = "".join(contents);
 f.write(contents);
 f.close();
-print(" *** Patching succeeded.");
+print_(" *** Patching succeeded.");
 
 # Reassemble it
-print(" *** Reassembling classes...");
+print_(" *** Reassembling classes...");
 
 def safe_move(orig, dest):
     if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
-        print(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
+        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
         exit(85);
     shutil.move(orig, dest);
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
-    if(dex_filename == dex_filename_last): print(os.linesep+"ERROR"); exit(84);  # ToDO: Notify error better
-    print(" *** Moving methods...");
+    if(dex_filename == dex_filename_last): print_(os.linesep+"ERROR"); exit(84);  # ToDO: Notify error better
+    print_(" *** Moving methods...");
     warning("Experimental code.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
     safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
-    print(" *** Reassembling classes...");
+    print_(" *** Reassembling classes...");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
     if sys.platform == "win32":
@@ -276,7 +276,7 @@ try:
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     os.remove(dirpath+"/out/"+dex_filename);  # Remove incomplete file
     if e.returncode != 2:
-        print(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+e.output.decode("utf-8").strip());
         exit(83);
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)");
     warning("but do NOT worry, we will retry.", False);
@@ -286,7 +286,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
 shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar.original");
 
 # Put classes back in the archive
-print(" *** Reassembling framework...");
+print_(" *** Reassembling framework...");
 #subprocess.check_call(["zip", "-q9X", "framework.jar", "./out/*.dex"]);
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", "./out/*.dex"]);
 
@@ -294,12 +294,12 @@ subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar
 shutil.copy2(dirpath+"/framework.jar", curdir+"/output/framework.jar");
 
 if mode == 1:
-    print(" *** Rooting adbd...");
+    print_(" *** Rooting adbd...");
     enable_device_writing(chosen_one);
     # Push to device
-    print(" *** Pushing changes to the device...");
+    print_(" *** Pushing changes to the device...");
     subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
     # Kill ADB server
     subprocess.check_call(["adb", "kill-server"]);
 
-print(" *** All done! :)");
+print_(" *** All done! :)");
