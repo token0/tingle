@@ -21,6 +21,15 @@ compression_program = "7za";
 if sys.platform == "win32": compression_program = "7za-w32";
 if("TERM" in os.environ) and (os.environ["TERM"] == "dumb"): DUMB_MODE = True;
 
+def on_exit():
+    # Return to the script folder
+    os.chdir(curdir);
+    # Clean up
+    #shutil.rmtree(dirpath);
+    if sys.platform == "win32" and not DUMB_MODE:
+        import msvcrt;
+        msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
+
 def exit(error_code):
     if error_code != 0: print(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
@@ -117,12 +126,7 @@ def assemble(in_dir, file, hide_output = False):
     subprocess.check_call(["java", "-jar", curdir+"/tools/smali.jar", "-o"+file, in_dir]);
     return True;
 
-def on_exit():
-    # Wait a key press before exit so the user can see the log also when the script is executed with a double click (on Windows)
-    if sys.platform == "win32":
-        import msvcrt;
-        msvcrt.getch();
-
+# Register exit handler
 atexit.register(on_exit);
 
 print("Where do you want to take the file to patch?" + os.linesep);
@@ -297,7 +301,3 @@ if mode == 1:
     subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
 
 print(" *** All done! :)");
-
-# Clean up
-os.chdir(curdir);
-#shutil.rmtree(dirpath);
