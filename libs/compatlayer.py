@@ -1,7 +1,14 @@
-# Compatibility layer
-#
-# Copyright (C) 2016  ale5000
-# License: GNU Lesser General Public License v3+
+"""Python compatibility layer.
+
+It make all versions of Python behaving as the latest version of Python 3.x.
+This will allow you to be compatible with all versions of Python without effort.
+It is still under development, not all functions are supported.
+"""
+
+__version__ = '0.0.6';
+__author__ = 'ale5000';
+__copyright__ = 'Copyright (C) 2016, ale5000'
+__license__ = 'GNU Lesser General Public License, Version 3.0+'
 
 def fix_builtins(override_debug=False):
     import sys;
