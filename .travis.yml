@@ -39,4 +39,4 @@ before_install:
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew install p7zip; fi;
 
 install: true
-script: python patch.py
+script: python main.py
