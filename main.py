@@ -160,7 +160,7 @@ print_(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
 if not os.path.exists("framework/"):
-    print_(os.linesep+"ERROR: No dex file(s) found, probably your file is odexed.");
+    print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.");
     exit(86);
 
 print_(" *** Disassembling classes...");
@@ -177,7 +177,7 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 
 # Check the existence of the file to patch
 if smali_folder == False:
-    print_(os.linesep+"ERROR: The file to patch cannot be found, probably it is odexed.");
+    print_(os.linesep+"ERROR: The file to patch cannot be found, please report the problem.");
     exit(82);
 to_patch = smali_folder+smali_to_search;
 
