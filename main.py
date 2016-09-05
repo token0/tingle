@@ -70,26 +70,35 @@ def get_OS():
     return platform.system()+" "+platform.release();
 
 def input_byte(msg):
-    sys.stdout.write(msg);
-    sys.stdout.flush();
+    print_(msg, end="");
     if DUMB_MODE:
         print_();
         return "";
-    return sys.stdin.readline().strip()[:1];
+    try:
+        value = sys.stdin.readline();
+        # KeyboardInterrupt leave a "", instead an empty value leave a "\n"
+        if value == "":
+            import time;
+            time.sleep(0.02);  # Give some time for the exception to being caught
+    except KeyboardInterrupt:
+        raise EOFError;
+    else:
+        return value.strip()[:1];
 
 def user_question(msg, default_value=1):
     try:
         value = input_byte(msg+os.linesep+"> ");
-        try:
-            return int(value);
-        except ValueError:
-            import time;
-            time.sleep(0.05);  # Give some time for the KeyboardInterrupt to being catched, if needed
-            print_("Used default value.");
-            return default_value;
-    except KeyboardInterrupt:
-        print_(os.linesep+os.linesep+"Killed by user, now exiting ;)");
+    except EOFError:
+        print_(os.linesep+os.linesep+"Killed by the user, now exiting ;)");
         sys.exit(0);
+
+    if(value == ""):
+        print_("Used default value.");
+        return default_value;
+    try:
+        return int(value);
+    except ValueError:
+        return user_question("Invalid value, try again...", default_value);
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
