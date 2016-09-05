@@ -4,16 +4,10 @@ import os;
 import subprocess;
 import tempfile;
 import shutil;
-import atexit;
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
-sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
-import compatlayer;
-
-compatlayer.fix_all();
-
-DUMB_MODE = False;
 PREVIOUS_DIR = os.getcwd();
+DUMB_MODE = False;
 compression_program = "7za";
 
 if os.environ.get("TERM") == "dumb":
@@ -21,8 +15,18 @@ if os.environ.get("TERM") == "dumb":
 if sys.platform == "win32":
     compression_program = "7za-w32";
 
-# Add the tools folder in the search path (used from subprocess), take precedence over system folders
-os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
+
+def init():
+    sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
+    import atexit;
+    import compatlayer;
+
+    # Activate Python compatibility layer
+    compatlayer.fix_all();
+    # Add tools folder to search path (used from subprocess), take precedence over system folders
+    os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
+    # Register exit handler
+    atexit.register(on_exit);
 
 
 def on_exit():
@@ -34,10 +38,12 @@ def on_exit():
         import msvcrt;
         msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
 
+
 def exit(error_code):
     if error_code != 0:
         print_(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
+
 
 def verify_dependencies(mode):
     from distutils.spawn import find_executable;
@@ -53,11 +59,14 @@ def verify_dependencies(mode):
     if mode == 1 and not exec_exists("adb"):
         exit(66);
 
+
 def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
 
+
 def debug(msg):
     print_("      DEBUG:", msg);
+
 
 def warning(msg, first_line=True):
     if first_line:
@@ -65,9 +74,11 @@ def warning(msg, first_line=True):
     else:
         print_("              ", msg);
 
+
 def get_OS():
     import platform;
     return platform.system()+" "+platform.release();
+
 
 def input_byte(msg):
     print_(msg, end="");
@@ -85,6 +96,7 @@ def input_byte(msg):
     else:
         return value.strip()[:1];
 
+
 def user_question(msg, default_value=1):
     try:
         value = input_byte(msg+os.linesep+"> ");
@@ -99,6 +111,7 @@ def user_question(msg, default_value=1):
         return int(value);
     except ValueError:
         return user_question("Invalid value, try again...", default_value);
+
 
 def select_device():
     subprocess.check_output(["adb", "start-server"]);
@@ -118,6 +131,7 @@ def select_device():
         chosen_one = devices[0];
     return chosen_one;
 
+
 def enable_device_writing(chosen_one):
     root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
@@ -132,10 +146,12 @@ def enable_device_writing(chosen_one):
         print_(os.linesep+"ERROR: Remount failed.");
         exit(81);
 
+
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
     subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
     return True;
+
 
 def assemble(in_dir, file, hide_output=False):
     debug("Assembling "+file);
@@ -144,9 +160,18 @@ def assemble(in_dir, file, hide_output=False):
     subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir]);
     return True;
 
-# Register exit handler
-atexit.register(on_exit);
 
+def find_smali(smali_to_search, dir):
+    dir_list = tuple(sorted(os.listdir(dir)));
+    for filename in dir_list:
+        out_dir = "./smali-"+remove_ext(filename)+"/";
+        disassemble(dir+filename, out_dir);
+        if os.path.exists(out_dir+smali_to_search):
+            return (out_dir, filename, dir_list[-1]);
+    return (None, None, None);
+
+
+init();
 print_("Where do you want to take the file to patch?" + os.linesep);
 mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
 
@@ -154,17 +179,20 @@ mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the 
 verify_dependencies(mode);
 
 # Select device
-if mode == 1: chosen_one = select_device();
+if mode == 1:
+    chosen_one = select_device();
 
 print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
 print_(" *** Mode:", mode);
-if mode == 1: print_(" *** Selected device:", chosen_one);
+if mode == 1:
+    print_(" *** Selected device:", chosen_one);
 
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print_(" *** Working dir: %s" % dirpath);
 
-if DUMB_MODE: exit(0);  # ToDO: Implement full test in dumb mode
+if DUMB_MODE:
+    exit(0);  # ToDO: Implement full test in dumb mode
 
 if mode == 1:
     # Pull framework somewhere temporary
@@ -182,15 +210,6 @@ if not os.path.exists("framework/"):
     exit(86);
 
 print_(" *** Disassembling classes...");
-def find_smali(smali_to_search, dir):
-    dir_list = tuple(sorted(os.listdir(dir)));
-    for filename in dir_list:
-        out_dir = "./smali-"+remove_ext(filename)+"/";
-        disassemble(dir+filename, out_dir);
-        if os.path.exists(out_dir+smali_to_search):
-            return (out_dir, filename, dir_list[-1]);
-    return (None, None, None);
-
 smali_to_search = "android/content/pm/PackageParser.smali";
 smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
 
