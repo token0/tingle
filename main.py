@@ -21,6 +21,7 @@ if sys.platform == "win32": compression_program = "7za-w32";
 # Add the tools folder in the search path (used from subprocess), take precedence over system folders
 os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
+
 def on_exit():
     # Return to the previous working directory
     os.chdir(PREVIOUS_DIR);
@@ -31,19 +32,23 @@ def on_exit():
         msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
 
 def exit(error_code):
-    if error_code != 0: print_(os.linesep+"ERROR CODE:", error_code);
+    if error_code != 0:
+        print_(os.linesep+"ERROR CODE:", error_code);
     sys.exit(error_code);
 
 def verify_dependencies(mode):
     from distutils.spawn import find_executable;
+
     def exec_exists(exec_name):
         if find_executable(exec_name) is not None:
             return True;
         print_(os.linesep+"ERROR: Missing executable =>", exec_name);
         return False;
 
-    if not exec_exists("java") or not exec_exists(compression_program): exit(65);
-    if mode == 1 and not exec_exists("adb"): exit(66);
+    if not exec_exists("java") or not exec_exists(compression_program):
+        exit(65);
+    if mode == 1 and not exec_exists("adb"):
+        exit(66);
 
 def remove_ext(filename):
     return filename.rsplit(".", 1)[0];
@@ -51,7 +56,7 @@ def remove_ext(filename):
 def debug(msg):
     print_("      DEBUG:", msg);
 
-def warning(msg, first_line = True):
+def warning(msg, first_line=True):
     if first_line:
         print_("      WARNING:", msg);
     else:
@@ -61,7 +66,7 @@ def get_OS():
     import platform;
     return platform.system()+" "+platform.release();
 
-def input_byte(msg): 
+def input_byte(msg):
     sys.stdout.write(msg);
     sys.stdout.flush();
     if DUMB_MODE:
@@ -95,7 +100,7 @@ def select_device():
 
     if len(devices) > 1:
         print_("Enter id of device to target:"+os.linesep);
-        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)])+os.linesep);
+        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep);
         chosen_one = devices[id-1];
     else:
         chosen_one = devices[0];
@@ -120,9 +125,10 @@ def disassemble(file, out_dir):
     subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
     return True;
 
-def assemble(in_dir, file, hide_output = False):
+def assemble(in_dir, file, hide_output=False):
     debug("Assembling "+file);
-    if hide_output: return subprocess.check_output(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
+    if hide_output:
+        return subprocess.check_output(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
     subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir]);
     return True;
 
@@ -169,14 +175,15 @@ def find_smali(smali_to_search, dir):
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/";
         disassemble(dir+filename, out_dir);
-        if os.path.exists(out_dir+smali_to_search): return (out_dir, filename, dir_list[-1]);
-    return (False, False, False);
+        if os.path.exists(out_dir+smali_to_search):
+            return (out_dir, filename, dir_list[-1]);
+    return (None, None, None);
 
 smali_to_search = "android/content/pm/PackageParser.smali";
 smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
 
 # Check the existence of the file to patch
-if smali_folder == False:
+if smali_folder is None:
     print_(os.linesep+"ERROR: The file to patch cannot be found, please report the problem.");
     exit(82);
 to_patch = smali_folder+smali_to_search;
@@ -256,7 +263,9 @@ def safe_move(orig, dest):
     shutil.move(orig, dest);
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
-    if(dex_filename == dex_filename_last): print_(os.linesep+"ERROR"); exit(84);  # ToDO: Notify error better
+    if(dex_filename == dex_filename_last):
+        print_(os.linesep+"ERROR");  # ToDO: Notify error better
+        exit(84);
     print_(" *** Moving methods...");
     warning("Experimental code.");
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
@@ -272,7 +281,8 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
 os.makedirs("out/");
 try:
     assemble(smali_folder, "out/"+dex_filename, True);
-    if sys.platform == "win32": subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
+    if sys.platform == "win32":
+        subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     os.remove(dirpath+"/out/"+dex_filename);  # Remove incomplete file
     if e.returncode != 2:
