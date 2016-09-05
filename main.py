@@ -1,9 +1,13 @@
 #!/usr/bin/env python
+"""Tingle - file patcher for Android."""
+
 import sys;
 import os;
 import subprocess;
 import tempfile;
 import shutil;
+
+__author__ = 'ale5000, moosd';
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
 PREVIOUS_DIR = os.getcwd();
@@ -299,7 +303,8 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
         exit(84);
     print_(" *** Moving methods...");
     warning("Experimental code.");
-    smali_dir = "./smali-"+remove_ext(dex_filename)+"/"; smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
+    smali_dir = "./smali-"+remove_ext(dex_filename)+"/";
+    smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
     safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
     print_(" *** Reassembling classes...");
