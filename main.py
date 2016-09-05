@@ -187,7 +187,7 @@ f = open(to_patch, "r");
 old_contents = f.readlines();
 f.close();
 
-f = open(SCRIPT_DIR+"/fillinsig.smali", "r");
+f = open(SCRIPT_DIR+"/patches/fillinsig.smali", "r");
 fillinsig = f.readlines();
 f.close();
 
