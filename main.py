@@ -6,17 +6,20 @@ import tempfile;
 import shutil;
 import atexit;
 
-DUMB_MODE = False;
-PREVIOUS_DIR = os.getcwd();
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
-compression_program = "7za";
-
 sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
 import compatlayer;
 
 compatlayer.fix_all();
-if os.environ.get("TERM") == "dumb": DUMB_MODE = True;
-if sys.platform == "win32": compression_program = "7za-w32";
+
+DUMB_MODE = False;
+PREVIOUS_DIR = os.getcwd();
+compression_program = "7za";
+
+if os.environ.get("TERM") == "dumb":
+    DUMB_MODE = True;
+if sys.platform == "win32":
+    compression_program = "7za-w32";
 
 # Add the tools folder in the search path (used from subprocess), take precedence over system folders
 os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
