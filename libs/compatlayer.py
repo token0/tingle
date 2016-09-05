@@ -10,6 +10,7 @@ __author__ = 'ale5000';
 __copyright__ = 'Copyright (C) 2016, ale5000'
 __license__ = 'GNU Lesser General Public License, Version 3.0+'
 
+
 def fix_builtins(override_debug=False):
     import sys;
     override_dict = {};
@@ -32,9 +33,11 @@ def fix_builtins(override_debug=False):
 
     def _print_wrapper(*args, **kwargs):
         flush = kwargs.get("flush", False);
-        if "flush" in kwargs: del kwargs["flush"];
+        if "flush" in kwargs:
+            del kwargs["flush"];
         orig_print(*args, **kwargs);
-        if flush: kwargs.get("file", sys.stdout).flush();
+        if flush:
+            kwargs.get("file", sys.stdout).flush();
 
     def _print_full(*args, **kwargs):
         opt = {"sep": " ", "end": "\n", "file": sys.stdout, "flush": False};
@@ -73,6 +76,7 @@ def fix_builtins(override_debug=False):
     builtins_dict.update(override_dict);
     del override_dict;
 
+
 def fix_subprocess(override_debug=False, override_exception=False):
     import subprocess;
 
@@ -83,7 +87,8 @@ def fix_subprocess(override_debug=False, override_exception=False):
             except TypeError:
                 super(self.__class__, self).__init__(returncode=returncode, cmd=cmd);
                 self.output = output;
-            if getattr(self, "stdout", False) == False: self.stdout = output;
+            if getattr(self, "stdout", False) == False:
+                self.stdout = output;
             self.stderr = stderr;
 
     def _check_output(*popenargs, **kwargs):
@@ -105,6 +110,7 @@ def fix_subprocess(override_debug=False, override_exception=False):
         from subprocess import check_output;
     except ImportError:
         subprocess.check_output = _check_output;
+
 
 def fix_all(override_debug=False, override_all=False):
     fix_builtins(override_debug);
