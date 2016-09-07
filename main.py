@@ -90,31 +90,36 @@ def input_byte(msg):
         print_();
         return "";
     try:
-        value = sys.stdin.readline();
+        val = sys.stdin.readline();
         # KeyboardInterrupt leave a "", instead an empty value leave a "\n"
-        if value == "":
+        if val == "":
             import time;
             time.sleep(0.02);  # Give some time for the exception to being caught
     except KeyboardInterrupt:
         raise EOFError;
     else:
-        return value.strip()[:1];
+        return val.strip()[:1];
 
 
-def user_question(msg, default_value=1):
+def user_question(msg, max_val, default_val=1):
     try:
-        value = input_byte(msg+os.linesep+"> ");
+        val = input_byte(msg+os.linesep+"> ");
     except EOFError:
         print_(os.linesep+os.linesep+"Killed by the user, now exiting ;)");
         sys.exit(130);
 
-    if(value == ""):
+    if(val == ""):
         print_("Used default value.");
-        return default_value;
+        return default_val;
+
     try:
-        return int(value);
+        val = int(val);
+        if val > 0 and val <= max_val:
+            return val;
     except ValueError:
-        return user_question("Invalid value, try again...", default_value);
+        pass;
+
+    return user_question("Invalid value, try again...", max_val, default_val);
 
 
 def select_device():
@@ -129,7 +134,7 @@ def select_device():
 
     if len(devices) > 1:
         print_("Enter id of device to target:"+os.linesep);
-        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep);
+        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep, len(devices));
         chosen_one = devices[id-1];
     else:
         chosen_one = devices[0];
@@ -177,7 +182,7 @@ def find_smali(smali_to_search, dir):
 
 init();
 print_("Where do you want to take the file to patch?" + os.linesep);
-mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2);
+mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2, 2);
 
 # Check the presence of the needed components
 verify_dependencies(mode);
