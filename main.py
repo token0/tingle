@@ -7,6 +7,7 @@ import subprocess;
 import tempfile;
 import shutil;
 
+__app__ = "Tingle";
 __author__ = 'ale5000, moosd';
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
@@ -25,6 +26,8 @@ def init():
     import atexit;
     import compatlayer;
 
+    if sys.platform == "win32":
+        os.system("TITLE "+__app__);
     # Activate Python compatibility layer
     compatlayer.fix_all();
     # Add tools folder to search path (used from subprocess), take precedence over system folders
