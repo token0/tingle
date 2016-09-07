@@ -8,30 +8,37 @@ import tempfile;
 import shutil;
 
 __app__ = "Tingle";
-__author__ = 'ale5000, moosd';
+__author__ = "ale5000, moosd";
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
-PREVIOUS_DIR = os.getcwd();
-DUMB_MODE = False;
 compression_program = "7za";
-
-if os.environ.get("TERM") == "dumb":
-    DUMB_MODE = True;
 if sys.platform == "win32":
     compression_program = "7za-w32";
 
 
 def init():
+    global SCRIPT_DIR, TMP_DIR, PREVIOUS_DIR, DUMB_MODE;
+    SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
+
+    if sys.platform == "win32":
+        os.system("TITLE "+__app__);
+
     sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
     import atexit;
     import compatlayer;
 
-    if sys.platform == "win32":
-        os.system("TITLE "+__app__);
     # Activate Python compatibility layer
     compatlayer.fix_all();
-    # Add tools folder to search path (used from subprocess), take precedence over system folders
+
+    # Add tools folder to search path (used from subprocess)
     os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
+
+    # Set constants (they won't be changed again)
+    TMP_DIR = None;
+    PREVIOUS_DIR = os.getcwd();
+    DUMB_MODE = False;
+    if os.environ.get("TERM") == "dumb":
+        DUMB_MODE = True;
+
     # Register exit handler
     atexit.register(on_exit);
 
@@ -39,8 +46,9 @@ def init():
 def on_exit():
     # Return to the previous working directory
     os.chdir(PREVIOUS_DIR);
-    # Clean up
-    #shutil.rmtree(dirpath);
+    # Clean up - ToDO
+    # if TMP_DIR is not None:
+    #     shutil.rmtree(TMP_DIR);
     if sys.platform == "win32" and not DUMB_MODE:
         import msvcrt;
         msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
@@ -165,9 +173,9 @@ def brew_input_file(mode, chosen_one):
         print_(" *** Pulling framework from device...");
         subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
     elif mode == 2:
-        shutil.copy2(SCRIPT_DIR+"/input/framework.jar", dirpath+"/");
+        shutil.copy2(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/");
     else:
-        shutil.copy2("/system/framework/framework.jar", dirpath+"/");
+        shutil.copy2("/system/framework/framework.jar", TMP_DIR+"/");
 
 
 def disassemble(file, out_dir):
@@ -194,23 +202,48 @@ def find_smali(smali_to_search, dir):
     return (None, None, None);
 
 
+def safe_move(orig, dest):
+    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
+        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
+        exit(85);
+    shutil.move(orig, dest);
+
+
+def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
+    if(dex_filename == dex_filename_last):
+        print_(os.linesep+"ERROR");  # ToDO: Notify error better
+        exit(84);
+    print_(" *** Moving methods...");
+    warning("Experimental code.");
+    smali_dir = "./smali-"+remove_ext(dex_filename)+"/";
+    smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
+    disassemble(in_dir+dex_filename_last, smali_dir_last);
+    safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
+    print_(" *** Reassembling classes...");
+    assemble(smali_dir, out_dir+dex_filename);
+    assemble(smali_dir_last, out_dir+dex_filename_last);
+    if sys.platform == "win32":
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename]);
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last]);
+
+
 init();
-print_("Where do you want to take the file to patch?" + os.linesep);
+
+print_("Where do you want to take the file to patch?"+os.linesep);
 mode = user_question("\t1 - From a device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 3, 2);
 
-# Check the presence of the needed components
 verify_dependencies(mode);
 
-# Select device
 chosen_one = None;
 if mode == 1:
     chosen_one = select_device();
 
 print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
 print_(" *** Mode:", mode);
-dirpath = tempfile.mkdtemp();
-os.chdir(dirpath);
-print_(" *** Working dir: %s" % dirpath);
+
+TMP_DIR = tempfile.mkdtemp("", __app__+"-");
+os.chdir(TMP_DIR);
+print_(" *** Working dir: %s" % TMP_DIR);
 
 if mode == 1:
     print_(" *** Selected device:", chosen_one);
@@ -220,7 +253,6 @@ if DUMB_MODE:
 
 brew_input_file(mode, chosen_one);
 
-# Disassemble it
 print_(" *** Disassembling framework...");
 subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
 
@@ -228,6 +260,7 @@ if not os.path.exists("framework/"):
     print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.");
     exit(86);
 
+# Disassemble it
 print_(" *** Disassembling classes...");
 smali_to_search = "android/content/pm/PackageParser.smali";
 smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
@@ -305,37 +338,14 @@ print_(" *** Patching succeeded.");
 
 # Reassemble it
 print_(" *** Reassembling classes...");
-
-def safe_move(orig, dest):
-    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
-        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
-        exit(85);
-    shutil.move(orig, dest);
-
-def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
-    if(dex_filename == dex_filename_last):
-        print_(os.linesep+"ERROR");  # ToDO: Notify error better
-        exit(84);
-    print_(" *** Moving methods...");
-    warning("Experimental code.");
-    smali_dir = "./smali-"+remove_ext(dex_filename)+"/";
-    smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
-    disassemble(in_dir+dex_filename_last, smali_dir_last);
-    safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
-    print_(" *** Reassembling classes...");
-    assemble(smali_dir, out_dir+dex_filename);
-    assemble(smali_dir_last, out_dir+dex_filename_last);
-    if sys.platform == "win32":
-        subprocess.check_call(["attrib", "-a", out_dir+dex_filename]);
-        subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last]);
-
 os.makedirs("out/");
+
 try:
     assemble(smali_folder, "out/"+dex_filename, True);
     if sys.platform == "win32":
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
-    os.remove(dirpath+"/out/"+dex_filename);  # Remove incomplete file
+    os.remove(TMP_DIR+"/out/"+dex_filename);  # Remove incomplete file
     if e.returncode != 2:
         print_(os.linesep+e.output.decode("utf-8").strip());
         exit(83);
@@ -344,15 +354,15 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
 # Backup the original file
-shutil.copy2(dirpath+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
+shutil.copy2(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
 
 # Put classes back in the archive
 print_(" *** Reassembling framework...");
-#subprocess.check_call(["zip", "-q9X", "framework.jar", os.curdir+"/out/*.dex"]);
+# subprocess.check_call(["zip", "-q9X", "framework.jar", os.curdir+"/out/*.dex"]);  # ToDO
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
 
 # Copy the patched file to the output folder
-shutil.copy2(dirpath+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
+shutil.copy2(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
     print_(" *** Rooting adbd...");
