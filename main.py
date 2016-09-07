@@ -156,6 +156,17 @@ def enable_device_writing(chosen_one):
         exit(81);
 
 
+def brew_input_file(mode, chosen_one):
+    if mode == 1:
+        # Pull framework somewhere temporary
+        print_(" *** Pulling framework from device...");
+        subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+    elif mode == 2:
+        shutil.copy2(SCRIPT_DIR+"/input/framework.jar", dirpath+"/");
+    else:
+        shutil.copy2("/system/framework/framework.jar", dirpath+"/");
+
+
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
     subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
@@ -182,33 +193,29 @@ def find_smali(smali_to_search, dir):
 
 init();
 print_("Where do you want to take the file to patch?" + os.linesep);
-mode = user_question("\t1 - From the device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 2, 2);
+mode = user_question("\t1 - From a device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 3, 2);
 
 # Check the presence of the needed components
 verify_dependencies(mode);
 
 # Select device
+chosen_one = None;
 if mode == 1:
     chosen_one = select_device();
 
 print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
 print_(" *** Mode:", mode);
-if mode == 1:
-    print_(" *** Selected device:", chosen_one);
-
 dirpath = tempfile.mkdtemp();
 os.chdir(dirpath);
 print_(" *** Working dir: %s" % dirpath);
 
+if mode == 1:
+    print_(" *** Selected device:", chosen_one);
+
 if DUMB_MODE:
     exit(0);  # ToDO: Implement full test in dumb mode
 
-if mode == 1:
-    # Pull framework somewhere temporary
-    print_(" *** Pulling framework from device...");
-    subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
-else:
-    shutil.copy2(SCRIPT_DIR+"/input/framework.jar", dirpath+"/");
+brew_input_file(mode, chosen_one);
 
 # Disassemble it
 print_(" *** Disassembling framework...");
