@@ -106,7 +106,7 @@ def user_question(msg, default_value=1):
         value = input_byte(msg+os.linesep+"> ");
     except EOFError:
         print_(os.linesep+os.linesep+"Killed by the user, now exiting ;)");
-        sys.exit(0);
+        sys.exit(130);
 
     if(value == ""):
         print_("Used default value.");
