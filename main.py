@@ -69,10 +69,15 @@ def verify_dependencies(mode):
         print_(os.linesep+"ERROR: Missing executable =>", exec_name);
         return False;
 
-    if not exec_exists("java") or not exec_exists(compression_program):
-        exit(65);
     if mode == 1 and not exec_exists("adb"):
-        exit(66);
+        exit(65);
+
+    if sys.platform == "linux-android":
+        if not exec_exists("dalvikvm") or not exec_exists("busybox"):
+            exit(66);
+    else:
+        if not exec_exists("java") or not exec_exists(compression_program):
+            exit(67);
 
 
 def remove_ext(filename):
