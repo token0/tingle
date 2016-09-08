@@ -167,15 +167,30 @@ def enable_device_writing(chosen_one):
         exit(81);
 
 
+def safe_copy(orig, dest):
+    shutil.copyfile(orig, dest);
+    try:
+        shutil.copystat(orig, dest);  # It may fail on Android
+    except OSError:
+        warning("shutil.copystat has failed.");
+
+
+def safe_move(orig, dest):
+    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
+        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
+        exit(85);
+    shutil.move(orig, dest);
+
+
 def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...");
         subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
     elif mode == 2:
-        shutil.copy2(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/");
+        safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar");
     else:
-        shutil.copy2("/system/framework/framework.jar", TMP_DIR+"/");
+        safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar");
 
 
 def decompress(file, out_dir):
@@ -233,13 +248,6 @@ def find_smali(smali_to_search, dir):
     return (None, None, None);
 
 
-def safe_move(orig, dest):
-    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
-        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
-        exit(85);
-    shutil.move(orig, dest);
-
-
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     if(dex_filename == dex_filename_last):
         print_(os.linesep+"ERROR");  # ToDO: Notify error better
@@ -285,7 +293,7 @@ if DUMB_MODE:
 brew_input_file(mode, chosen_one);
 
 print_(" *** Decompressing framework...");
-decompress("framework.jar", "framework/")
+decompress("framework.jar", "framework/");
 
 # Disassemble it
 print_(" *** Disassembling classes...");
@@ -381,7 +389,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
 # Backup the original file
-shutil.copy2(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
+safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
 
 # Put classes back in the archive
 print_(" *** Recompressing framework...");
@@ -389,7 +397,7 @@ print_(" *** Recompressing framework...");
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
 
 # Copy the patched file to the output folder
-shutil.copy2(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
+safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
     print_(" *** Rooting adbd...");
