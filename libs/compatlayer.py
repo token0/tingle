@@ -81,9 +81,9 @@ def fix_builtins(override_debug=False):
 def fix_sys(override_debug=False):
     if sys.platform.startswith("linux"):
         if sys.platform == "linux4":
-            import os;
-            if os.uname()[4].startswith("armv"):
-                sys.platform = "android";
+            from distutils.spawn import find_executable;
+            if find_executable("dalvikvm") is not None:
+                sys.platform = "linux-android";
                 return;
         sys.platform = "linux";
 
