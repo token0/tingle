@@ -7,7 +7,7 @@ It is still under development, not all functions are supported.
 
 import sys;
 
-__version__ = "0.0.7";
+__version__ = "0.0.8";
 __author__ = "ale5000";
 __copyright__ = "Copyright (C) 2016, ale5000";
 __license__ = "GNU Lesser General Public License, Version 3.0+";
@@ -79,12 +79,15 @@ def fix_builtins(override_debug=False):
 
 
 def fix_sys(override_debug=False):
-    if sys.platform.startswith("linux"):
-        if sys.platform == "linux4":
-            from distutils.spawn import find_executable;
-            if find_executable("dalvikvm") is not None:
-                sys.platform = "linux-android";
-                return;
+    def _fix_android():
+        from distutils.spawn import find_executable;
+        if find_executable("dalvikvm") is not None:
+            sys.platform = "linux-android";
+
+    if sys.platform == "linux4" or sys.platform.startswith("linux-armv"):
+        _fix_android();
+
+    if sys.platform.startswith("linux") and "-" not in sys.platform:
         sys.platform = "linux";
 
 
