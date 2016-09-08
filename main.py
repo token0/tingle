@@ -46,9 +46,9 @@ def init():
 def on_exit():
     # Return to the previous working directory
     os.chdir(PREVIOUS_DIR);
-    # Clean up - ToDO
-    # if TMP_DIR is not None:
-    #     shutil.rmtree(TMP_DIR);
+    # Clean up
+    if TMP_DIR is not None:
+        shutil.rmtree(TMP_DIR+"/");
     if sys.platform == "win32" and not DUMB_MODE:
         import msvcrt;
         msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
