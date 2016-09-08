@@ -178,22 +178,53 @@ def brew_input_file(mode, chosen_one):
         shutil.copy2("/system/framework/framework.jar", TMP_DIR+"/");
 
 
+def decompress(file, out_dir):
+    debug("Decompressing "+file);
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir);
+    if sys.platform == "linux-android":
+        decomp_cmd = ["busybox", "unzip", "-oq", "-d", out_dir];
+    else:
+        decomp_cmd = [compression_program, "x", "-y", "-bd", "-bso0", "-tzip", "-o"+out_dir];
+    decomp_cmd.extend([file, "*.dex"]);
+
+    subprocess.check_call(decomp_cmd);
+    return True;
+
+
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
-    subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar", "-lsx", "-o"+out_dir, file]);
+    if sys.platform == "linux-android":
+        disass_cmd = ["dalvikvm", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"];
+    else:
+        disass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar"];
+    disass_cmd.extend(["-lsx", "-o"+out_dir, file]);
+
+    subprocess.check_call(disass_cmd);
     return True;
 
 
 def assemble(in_dir, file, hide_output=False):
     debug("Assembling "+file);
+    if sys.platform == "linux-android":
+        ass_cmd = ["dalvikvm", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main"];
+    else:
+        ass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/smali.jar"];
+    ass_cmd.extend(["-o"+file, in_dir]);
+
     if hide_output:
-        return subprocess.check_output(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir], stderr=subprocess.STDOUT);
-    subprocess.check_call(["java", "-jar", SCRIPT_DIR+"/tools/smali.jar", "-o"+file, in_dir]);
+        return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT);
+    subprocess.check_call(ass_cmd);
     return True;
 
 
 def find_smali(smali_to_search, dir):
     dir_list = tuple(sorted(os.listdir(dir)));
+
+    if len(dir_list) == 0:
+        print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.");
+        exit(86);
+
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/";
         disassemble(dir+filename, out_dir);
@@ -253,12 +284,8 @@ if DUMB_MODE:
 
 brew_input_file(mode, chosen_one);
 
-print_(" *** Disassembling framework...");
-subprocess.check_output([compression_program, "x", "-y", "-tzip", "-o./framework/", "./framework.jar", "*.dex"]);
-
-if not os.path.exists("framework/"):
-    print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.");
-    exit(86);
+print_(" *** Decompressing framework...");
+decompress("framework.jar", "framework/")
 
 # Disassemble it
 print_(" *** Disassembling classes...");
@@ -357,7 +384,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
 shutil.copy2(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
 
 # Put classes back in the archive
-print_(" *** Reassembling framework...");
+print_(" *** Recompressing framework...");
 # subprocess.check_call(["zip", "-q9X", "framework.jar", os.curdir+"/out/*.dex"]);  # ToDO
 subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
 
