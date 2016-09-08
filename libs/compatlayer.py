@@ -5,14 +5,15 @@ This will allow you to be compatible with all versions of Python without effort.
 It is still under development, not all functions are supported.
 """
 
-__version__ = '0.0.6';
-__author__ = 'ale5000';
-__copyright__ = 'Copyright (C) 2016, ale5000'
-__license__ = 'GNU Lesser General Public License, Version 3.0+'
+import sys;
+
+__version__ = "0.0.7";
+__author__ = "ale5000";
+__copyright__ = "Copyright (C) 2016, ale5000";
+__license__ = "GNU Lesser General Public License, Version 3.0+";
 
 
 def fix_builtins(override_debug=False):
-    import sys;
     override_dict = {};
     orig_print = None;
     used_print = None;
@@ -77,6 +78,16 @@ def fix_builtins(override_debug=False):
     del override_dict;
 
 
+def fix_sys(override_debug=False):
+    if sys.platform.startswith("linux"):
+        if sys.platform == "linux4":
+            import os;
+            if os.uname()[4].startswith("armv"):
+                sys.platform = "android";
+                return;
+        sys.platform = "linux";
+
+
 def fix_subprocess(override_debug=False, override_exception=False):
     import subprocess;
 
@@ -114,4 +125,5 @@ def fix_subprocess(override_debug=False, override_exception=False):
 
 def fix_all(override_debug=False, override_all=False):
     fix_builtins(override_debug);
+    fix_sys(override_debug);
     fix_subprocess(override_debug, override_all);
