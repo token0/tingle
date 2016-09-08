@@ -195,7 +195,7 @@ def decompress(file, out_dir):
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
     if sys.platform == "linux-android":
-        disass_cmd = ["dalvikvm", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"];
+        disass_cmd = ["dalvikvm", "-Xmx64m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"];
     else:
         disass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar"];
     disass_cmd.extend(["-lsx", "-o"+out_dir, file]);
