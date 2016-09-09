@@ -232,7 +232,7 @@ def disassemble(file, out_dir):
 def assemble(in_dir, file, hide_output=False):
     debug("Assembling "+file);
     if sys.platform == "linux-android":
-        ass_cmd = ["dalvikvm", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main"];
+        ass_cmd = ["dalvikvm", "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"];
     else:
         ass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/smali.jar"];
     ass_cmd.extend(["-o"+file, in_dir]);
