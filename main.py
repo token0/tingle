@@ -391,8 +391,10 @@ try:
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     safe_file_delete(TMP_DIR+"/out/"+dex_filename);  # Remove incomplete file
-    if e.returncode != 2:
-        print_(os.linesep+e.output.decode("utf-8").strip());
+    output = e.output.decode("utf-8");
+    if e.returncode != 2 or "Unsigned short value out of range: 65536" not in output:
+        print_(os.linesep+output.strip());
+        print_(os.linesep+"Return code: "+str(e.returncode));
         exit(83);
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)");
     warning("but do NOT worry, we will retry.", False);
