@@ -187,6 +187,11 @@ def safe_move(orig, dest):
     shutil.move(orig, dest);
 
 
+def safe_file_delete(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path);
+
+
 def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
@@ -385,7 +390,7 @@ try:
     if sys.platform == "win32":
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
-    os.remove(TMP_DIR+"/out/"+dex_filename);  # Remove incomplete file
+    safe_file_delete(TMP_DIR+"/out/"+dex_filename);  # Remove incomplete file
     if e.returncode != 2:
         print_(os.linesep+e.output.decode("utf-8").strip());
         exit(83);
