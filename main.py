@@ -267,7 +267,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/";
     smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
     disassemble(in_dir+dex_filename_last, smali_dir_last);
-    safe_move(smali_dir+"android/drm/", smali_dir_last+"android/drm/");
+    safe_move(smali_dir+"android/bluetooth/", smali_dir_last+"android/bluetooth/");
     print_(" *** Reassembling classes...");
     assemble(smali_dir, out_dir+dex_filename);
     assemble(smali_dir_last, out_dir+dex_filename_last);
