@@ -24,10 +24,10 @@ def init():
 
     sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
     import atexit;
-    import compatlayer;
+    import pycompatlayer;
 
     # Activate Python compatibility layer
-    compatlayer.fix_all();
+    pycompatlayer.fix_all();
 
     # Add tools folder to search path (used from subprocess)
     os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
