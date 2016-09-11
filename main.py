@@ -210,10 +210,15 @@ def decompress(file, out_dir):
     if sys.platform == "linux-android":
         decomp_cmd = ["busybox", "unzip", "-oq", "-d", out_dir];
     else:
-        decomp_cmd = [compression_program, "x", "-y", "-bd", "-bso0", "-tzip", "-o"+out_dir];
+        decomp_cmd = [compression_program, "x", "-y", "-bd", "-tzip", "-o"+out_dir];
     decomp_cmd.extend([file, "*.dex"]);
 
-    subprocess.check_call(decomp_cmd);
+    try:
+        subprocess.check_output(decomp_cmd);
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+"Return code: "+str(e.returncode));
+        exit(87);
     return True;
 
 
