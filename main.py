@@ -100,6 +100,21 @@ def get_OS():
     return platform.system()+" "+platform.release();
 
 
+def parse_7za_version(output):
+    output = output[:output.index("Copyright")].strip(" :");
+    return output[output.rindex(" ")+1:];
+
+
+def display_info():
+    print_(os.linesep+"-----------------------");
+    print_("Name: "+__app__);
+    print_("Author: "+__author__+os.linesep);
+
+    print_("Installed dependencies:");
+    print_("- 7za "+parse_7za_version(subprocess.check_output([compression_program, "i"]).decode("utf-8")));
+    print_("-----------------------"+os.linesep);
+
+
 def input_byte(msg):
     print_(msg, end="", flush=True);
     if DUMB_MODE:
@@ -129,6 +144,9 @@ def user_question(msg, max_val, default_val=1, show_question=True):
     if(val == ""):
         print_("Used default value.");
         return default_val;
+    elif(val == "i"):
+        display_info();
+        return user_question(msg, max_val, default_val, True);
 
     try:
         val = int(val);
