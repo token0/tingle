@@ -1,4 +1,4 @@
-"""PyCompatLayer - compatibility layer for Python.
+"""PyCompatLayer - Compatibility layer for Python.
 
 It make all versions of Python behaving as the latest version of Python 3.x.
 This will allow you to be compatible with all versions of Python without effort.
@@ -10,7 +10,7 @@ import sys;
 __version__ = "0.0.9";
 __author__ = "ale5000";
 __copyright__ = "Copyright (C) 2016, ale5000";
-__license__ = "GNU Lesser General Public License, Version 3.0+";
+__license__ = "LGPLv3+";
 
 
 def fix_builtins(override_debug=False):
