@@ -101,7 +101,7 @@ def get_OS():
 
 
 def input_byte(msg):
-    print_(msg, end="");
+    print_(msg, end="", flush=True);
     if DUMB_MODE:
         print_();
         return "";
@@ -117,9 +117,11 @@ def input_byte(msg):
         return val.strip()[:1];
 
 
-def user_question(msg, max_val, default_val=1):
+def user_question(msg, max_val, default_val=1, show_question=True):
+    if show_question:
+        print_(msg);
     try:
-        val = input_byte(msg+os.linesep+"> ");
+        val = input_byte("> ");
     except EOFError:
         print_(os.linesep+os.linesep+"Killed by the user, now exiting ;)");
         sys.exit(130);
@@ -135,7 +137,8 @@ def user_question(msg, max_val, default_val=1):
     except ValueError:
         pass;
 
-    return user_question("Invalid value, try again...", max_val, default_val);
+    print_("Invalid value, try again...");
+    return user_question(msg, max_val, default_val, False);
 
 
 def select_device():
@@ -149,8 +152,9 @@ def select_device():
     devices = [a.split("\t")[0] for a in devices];
 
     if len(devices) > 1:
-        print_("Enter id of device to target:"+os.linesep);
-        id = user_question("\t"+(os.linesep+"\t").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep, len(devices));
+        print_();
+        question = "Enter id of device to target:"+os.linesep+os.linesep+"    "+(os.linesep+"    ").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep;
+        id = user_question(question, len(devices));
         chosen_one = devices[id-1];
     else:
         chosen_one = devices[0];
@@ -283,8 +287,8 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
 
 init();
 
-print_("Where do you want to take the file to patch?"+os.linesep);
-mode = user_question("\t1 - From a device (adb)"+os.linesep + "\t2 - From the input folder"+os.linesep, 3, 2);
+question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep;
+mode = user_question(question, 3, 2);
 
 verify_dependencies(mode);
 
