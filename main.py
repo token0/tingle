@@ -73,7 +73,7 @@ def verify_dependencies(mode):
         exit(65);
 
     if sys.platform == "linux-android":
-        if not exec_exists("dalvikvm") or not exec_exists("busybox"):
+        if not exec_exists("dalvikvm") or not exec_exists("busybox") or not exec_exists("zip"):
             exit(66);
     else:
         if not exec_exists("java") or not exec_exists(compression_program):
