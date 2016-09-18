@@ -60,7 +60,6 @@ subprocess.check_call(["adb", "-s", chosen_one, "remount", "/system"])
 
 print(" *** Pulling framework from device...")
 subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."])
-shutil.copy2("framework.jar", "framework.jar.backup") # back it up in case things ever go wrong
 
 # disassemble it
 print(" *** Disassembling framework...")
@@ -135,6 +134,10 @@ if not DEBUG_PROCESS:
     f.write(contents)
     f.close()
 
+# back it up in case things ever go wrong
+backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup")
+shutil.copy2(os.path.join(dirpath, "framework.jar"), backup_jar)
+
 # reassemble it
 print(" *** Injection successful. Reassembling smali...")
 subprocess.check_call(["java", "-jar", os.path.join(SCRIPT_DIR, "tools", "smali.jar"), "classes", "-o", "classes.dex"])
@@ -144,16 +147,18 @@ print(" *** Putting things back like nothing ever happened...")
 for f in glob.glob("classes*.dex"):
     subprocess.check_call(["zip", "-r", "framework.jar", f])
 
+# copy the patched file in the output folder, so if the pushing fail it can be done manually
+shutil.copy2(os.path.join(dirpath, "framework.jar"), os.path.join(SCRIPT_DIR, "output", "framework.jar"))
+
 # push to device
 print(" *** Pushing changes to device...")
 if not DEBUG_PROCESS:
     subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"])
 
 print(" *** All done! :)")
-fjar = os.path.join(dirpath, "framework.jar.backup")
-print(" *** Your old framework.jar is present at %s, please run\n     \tadb push \"%s\" /system/framework/framework.jar\n     from recovery if your phone bootloops to recover." % (fjar, fjar))
+print(" *** Your old framework.jar is present at %s, please run\n     \tadb push \"%s\" /system/framework/framework.jar\n     from recovery if your phone bootloops to recover." % (backup_jar, backup_jar))
 
 # return to the previous working directory
 os.chdir(PREVIOUS_DIR)
 # clean up
-#shutil.rmtree(dirpath)
+shutil.rmtree(dirpath)
