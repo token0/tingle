@@ -244,6 +244,23 @@ def decompress(file, out_dir):
     return True;
 
 
+def compress(in_dir, file):
+    debug("Compressing "+file);
+    if sys.platform == "linux-android":
+        comp_cmd = ["zip", "-q9jX"];
+    else:
+        comp_cmd = [compression_program, "a", "-y", "-bd", "-tzip"];
+    comp_cmd.extend([file, in_dir+"*.dex"]);
+
+    try:
+        subprocess.check_output(comp_cmd);
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+"Return code: "+str(e.returncode));
+        exit(88);
+    return True;
+
+
 def disassemble(file, out_dir):
     debug("Disassembling "+file);
     if sys.platform == "linux-android":
@@ -432,8 +449,7 @@ safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original")
 
 # Put classes back in the archive
 print_(" *** Recompressing framework...");
-# subprocess.check_call(["zip", "-q9X", "framework.jar", os.curdir+"/out/*.dex"]);  # ToDO
-subprocess.check_output([compression_program, "a", "-y", "-tzip", "framework.jar", os.curdir+"/out/*.dex"]);
+compress(os.curdir+"/out/", "framework.jar");
 
 # Copy the patched file to the output folder
 safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
