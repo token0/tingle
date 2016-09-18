@@ -1,4 +1,4 @@
-# Tingle - file patcher for Android
+# Tingle - File patcher for Android
 [![Build Status](https://travis-ci.org/ale5000-git/tingle.svg?branch=master)](https://travis-ci.org/ale5000-git/tingle)
 
 ## What this does
