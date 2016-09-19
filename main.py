@@ -22,7 +22,7 @@ def init():
     if sys.platform == "win32":
         os.system("TITLE "+__app__);
 
-    sys.path.insert(1, SCRIPT_DIR+os.sep+"libs");
+    sys.path.append(os.path.join(SCRIPT_DIR, "libs"));
     import atexit;
     import pycompatlayer;
 
