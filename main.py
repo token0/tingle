@@ -445,7 +445,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
 # Backup the original file
-safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.original");
+safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.backup");
 
 # Put classes back in the archive
 print_(" *** Recompressing framework...");
