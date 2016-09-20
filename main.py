@@ -452,6 +452,7 @@ print_(" *** Recompressing framework...");
 compress(os.curdir+"/out/", "framework.jar");
 
 # Copy the patched file to the output folder
+print_(" *** Copying the patched file in the output folder...");
 safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
