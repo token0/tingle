@@ -255,6 +255,7 @@ def compress(in_dir, file):
         subprocess.check_output(comp_cmd);
     except subprocess.CalledProcessError as e:
         print_(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+"Cmd: "+str(e.cmd));
         print_(os.linesep+"Return code: "+str(e.returncode));
         exit(88);
     return True;
