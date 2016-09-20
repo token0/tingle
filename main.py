@@ -247,10 +247,9 @@ def decompress(file, out_dir):
 def compress(in_dir, file):
     debug("Compressing "+file);
     if sys.platform == "linux-android":
-        comp_cmd = ["zip", "-q9jX"];
+        comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"];
     else:
-        comp_cmd = [compression_program, "a", "-y", "-bd", "-tzip"];
-    comp_cmd.extend([file, in_dir+"*.dex"]);
+        comp_cmd = [compression_program, "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"];
 
     try:
         subprocess.check_output(comp_cmd);
