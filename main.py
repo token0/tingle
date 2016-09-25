@@ -460,7 +460,7 @@ if mode == 1:
     enable_device_writing(chosen_one);
     # Push to device
     print_(" *** Pushing changes to the device...");
-    subprocess.check_call(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+    subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
     # Kill ADB server
     subprocess.check_call(["adb", "kill-server"]);
 
