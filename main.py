@@ -460,7 +460,19 @@ if mode == 1:
     enable_device_writing(chosen_one);
     # Push to device
     print_(" *** Pushing changes to the device...");
-    subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+    try:
+        subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
+    except subprocess.CalledProcessError as e:
+        output = e.output.decode("utf-8");
+        debug(output.strip());
+        if e.returncode == 1 and "No space left on device" in output:
+            warning("Pushing has failed, we will retry from the recovery.");
+            subprocess.check_call(["adb", "-s", chosen_one, "reboot", "recovery"]);
+            subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
+            enable_device_writing(chosen_one);
+            subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+        else:
+            raise;
     # Kill ADB server
     subprocess.check_call(["adb", "kill-server"]);
 
