@@ -218,7 +218,7 @@ def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...");
-        subprocess.check_call(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+        subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
     elif mode == 2:
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar");
     else:
@@ -452,7 +452,7 @@ print_(" *** Recompressing framework...");
 compress(os.curdir+"/out/", "framework.jar");
 
 # Copy the patched file to the output folder
-print_(" *** Copying the patched file in the output folder...");
+print_(" *** Copying the patched file to the output folder...");
 safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
