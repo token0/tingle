@@ -148,6 +148,7 @@ for f in glob.glob("classes*.dex"):
     subprocess.check_call(["zip", "-r", "framework.jar", f])
 
 # copy the patched file in the output folder, so if the pushing fail it can be done manually
+print(" *** Copying the patched file to the output folder...")
 shutil.copy2(os.path.join(dirpath, "framework.jar"), os.path.join(SCRIPT_DIR, "output", "framework.jar"))
 
 # push to device
