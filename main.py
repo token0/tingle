@@ -387,12 +387,15 @@ while i < len(old_contents):
     if ".method public static fillinsig" in old_contents[i]:
         partially_patched = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: Android 6.0.x / CyanogenMod 13");
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: Android 4.4.x / CyanogenMod 10-11");
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;ZII)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: Alien Dalvik (Sailfish OS)");
         in_function = True;
     if ".end method" in old_contents[i]:
         in_function = False;
