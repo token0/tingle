@@ -19,12 +19,12 @@ def init():
     global SCRIPT_DIR, TMP_DIR, PREVIOUS_DIR, DUMB_MODE;
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
 
-    if sys.platform == "win32":
-        os.system("TITLE "+__app__);
-
     sys.path.append(os.path.join(SCRIPT_DIR, "libs"));
     import atexit;
     import pycompatlayer;
+
+    if sys.platform == "win32":
+        os.system("TITLE "+__app__);
 
     # Activate Python compatibility layer
     pycompatlayer.fix_all();
