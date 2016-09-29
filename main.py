@@ -394,6 +394,9 @@ while i < len(old_contents):
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Android 4.4.x / CyanogenMod 10-11");
         in_function = True;
+    if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJ)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: CyanogenMod 7-9 - UNTESTED");
+        in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;ZII)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Alien Dalvik (Sailfish OS)");
         in_function = True;
