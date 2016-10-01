@@ -422,13 +422,16 @@ while i < len(old_contents):
         contents.append(old_contents[i]);
     i = i + 1;
 
-if not already_patched and not partially_patched:
-    contents.extend(fillinsig);
-elif partially_patched and not already_patched:
-    print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
-elif already_patched:
+if already_patched:
     print_(" *** This framework.jar appears to have been already patched... Exiting.");
     exit(0);
+elif not done_patching:
+    print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.");
+    exit(89);
+elif partially_patched:
+    print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
+else:
+    contents.extend(fillinsig);
 
 f = open(to_patch, "w");
 contents = "".join(contents);
