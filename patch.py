@@ -123,13 +123,16 @@ while i < len(old_contents):
     i = i + 1
 
 if not DEBUG_PROCESS:
-    if not already_patched and not partially_patched:
-        contents.extend(fillinsig)
-    elif partially_patched and not already_patched:
-        print(" *** Previous failed patch attempt, not including the fillinsig method again...")
-    elif already_patched:
-        print(" *** This framework.jar appears to already have been patched... Exiting.")
+    if already_patched:
+        print(" *** This framework.jar appears to have been already patched... Exiting.")
         sys.exit(0)
+    elif not done_patching:
+        print(" *** ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.")
+        sys.exit(1)
+    elif partially_patched:
+        print(" *** Previous failed patch attempt, not including the fillinsig method again...")
+    else:
+        contents.extend(fillinsig)
     f = open(to_patch, "w")
     contents = "".join(contents)
     f.write(contents)
