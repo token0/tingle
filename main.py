@@ -218,7 +218,8 @@ def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...");
-        subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."]);
+        output = subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT);
+        debug(output.decode("utf-8").rstrip());
     elif mode == 2:
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar");
     else:
@@ -468,7 +469,8 @@ if mode == 1:
     # Push to device
     print_(" *** Pushing changes to the device...");
     try:
-        subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
+        output = subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
+        debug(output.decode("utf-8").rstrip());
     except subprocess.CalledProcessError as e:
         output = e.output.decode("utf-8");
         debug(output.strip());
