@@ -6,6 +6,9 @@ If you have a rooted phone, this will allow you to patch the android system and 
 
 Notably, it is made to inject a fake-signature patch into the system so it can spoof android app signatures.
 
+## Compatibility
+Windows, Linux and Android.
+
 ## How to use
 Make sure you have Python, Java and adb available, connect your device via usb. In the phone settings, find the setting for 'Android debugging' and enable it, and find the setting for 'Root Access' and make sure ADB has root access. Now, on the computer, run `python main.py` (or `python3 main.py`).
 
