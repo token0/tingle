@@ -161,6 +161,7 @@ def user_question(msg, max_val, default_val=1, show_question=True):
 
 
 def select_device():
+    # Start adb server before using it otherwise we get an unintended output inside other commands
     subprocess.check_output(["adb", "start-server"]);
     devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
     if devices.count(os.linesep) <= 2:
@@ -332,6 +333,8 @@ verify_dependencies(mode);
 chosen_one = None;
 if mode == 1:
     chosen_one = select_device();
+    if DEBUG_PROCESS:
+        print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE");
 
 print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
 print_(" *** Mode:", mode);
@@ -495,3 +498,7 @@ if mode == 1:
     subprocess.check_call(["adb", "kill-server"]);
 
 print_(" *** All done! :)");
+
+backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup");
+print_(os.linesep + "Your old framework.jar is present at "+backup_jar+", please run:");
+print_(" adb push \""+backup_jar+"\" /system/framework/framework.jar" + os.linesep + "from recovery if your phone bootloops to recover.");
