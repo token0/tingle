@@ -1,52 +1,26 @@
-# Framework Patcher for Android
+# Tingle - File patcher for Android
+[![Build Status](https://travis-ci.org/ale5000-git/tingle.svg?branch=master)](https://travis-ci.org/ale5000-git/tingle)
 
 ## What this does
-If you have a rooted phone, this will allow you to patch the android system and inject features without needing to recompile the OS or install xposed.
+This will allow you to patch the Android system and inject features without needing to recompile the OS or install Xposed.
 
-Notably, I made this to inject a fake-signature patch into the system so I can spoof android app signatures.
+Notably, it is made to inject a fake-signature patch into the system so it can spoof android app signatures (Useful for [microG](https://microg.org/)).
+
+## Compatibility
+Windows, Linux, macOS (OS X) and Android.  
+It doesn't require root on the OS where you run it but it require root on the device you want to patch.
 
 ## How to use
-1. Make sure you have Python, Java and adb available
-2. Connect your device via usb.
+1. Make sure you have Python, Java and ADB available.
+2. Connect your device via USB.
 3. Make sure Developer Settings is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About Phone` and tapping on the build number five times in succession.
-4. In the phone settings, find the setting for 'Android debugging' and enable it.
-5. Find the setting for 'Root Access' and make sure ADB has root access.
-6. Now, on the computer, run `python3 patch.py`
-7. Reboot phone
+4. In the device settings, find the setting for `Android debugging` and enable it.
+5. Find the setting for `Root Access` and make sure ADB has root access.
+6. Now, on the computer, run `python main.py` (or `python3 main.py`).
+7. Reboot the device.
 
-(Note: I have only tested this under Linux)
+You will then need to reboot for Android to detect that you've installed a new framework and so for Dalvik/ART to re-optimise all the apps on the phone. Without this, you may receive an `INSTALL_FAILED_DEXOPT` error when installing new apps.
 
-You will need to reboot for Android to detect that you've installed a new framework and so for Dalvik/ART to re-optimise all the apps on the phone. Without this, you may receive an `INSTALL_FAILED_DEXOPT` error when installing new apps. You can do this in android's recovery too (provided /system is mounted). 
+You should now have a system patched to accept spoofed app signatures.
 
-Note: You will need to redo this everytime you flash a new /system partition (e.g. flashing an updated cyanogenmod zip or new ROM)
-
-## How to fake signatures
-If you have run `patch.py`, you should now have a system patched to accept spoofed app signatures. (Useful for [microG](https://github.com/microg/android_packages_apps_GmsCore)). This bit below is not necessary if you just want that.
-
-If you want to modify an arbitrary app and keep its signature by making use of this patch, copy the output of:
-
-```
-java /path/to/framework/patcher/ApkSig <apk name>
-```
-
-into a meta-data underneath <application> in the app's AndroidManifest.xml. Disassemble the app as follows:
-
-```
-apktool d <apk name>
-```
-
-Then in AndroidManifest.xml, find the following: (the dots represent other parameters not important for this)
-
-```
-<application ... >
-```
-
-And insert the meta-data
-
-```
-<application ... >
-    <meta-data
-        android:name="fake-signature"
-        android:value="(value obtained from ApkSig earlier)" />
-```
-
+Note: You will need to redo this everytime you flash a new /system partition (e.g. flashing an updated cyanogenmod zip or new ROM).

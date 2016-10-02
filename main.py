@@ -1,159 +1,504 @@
-#!/usr/bin/env python3
-import os, subprocess, tempfile, time, shutil, sys, glob
-from distutils.spawn import find_executable
+#!/usr/bin/env python
+"""Tingle - File patcher for Android."""
 
-POSIX = False if os.sep is "\\" else True
-DEBUG_PROCESS = False
+import sys;
+import os;
+import subprocess;
+import tempfile;
+import shutil;
 
-# check if dependencies are there
-deperrors = []
+__app__ = "Tingle";
+__author__ = "ale5000, moosd";
 
-def exists(program):
-    if find_executable(program) is not None:
-        return 0
-    deperrors.append(program)
-    return 1
+DEBUG_PROCESS = False;
+compression_program = "7za";
+if sys.platform == "win32":
+    compression_program = "7za-w32";
 
-if exists("zip") + exists("adb") + exists("java") > 0:
-    print(" *** ERROR: Dependencies not satisfied.")
-    print("\tPlease make sure you install:\n\t%s" % (deperrors))
-    sys.exit(2)
 
-# start adb server before using it otherwise we get an unintended output inside other commands
-subprocess.check_output(["adb", "start-server"])
+def init():
+    global SCRIPT_DIR, TMP_DIR, PREVIOUS_DIR, DUMB_MODE;
+    SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__));
 
-# check if device is connected
-devices = subprocess.check_output(["adb", "devices"]).decode("utf-8")
+    sys.path.append(os.path.join(SCRIPT_DIR, "libs"));
+    import atexit;
+    import pycompatlayer;
 
-if devices.count('\n') <= 2:
-    print(" *** Please connect your device first.")
-    sys.exit(0)
+    if sys.platform == "win32":
+        os.system("TITLE "+__app__);
 
-if DEBUG_PROCESS:
-    print(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE")
+    # Activate Python compatibility layer
+    pycompatlayer.fix_all();
 
-devices = devices.split('\n')[1:-2]
-devices = [a.split("\t")[0] for a in devices]
+    # Add tools folder to search path (used from subprocess)
+    os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "");
 
-if len(devices) > 1:
-    print("Enter id of device to target:")
-    id = input("\t"+("\n\t").join([str(i)+" - "+a for i,a in zip(range(1, len(devices)+1), devices)]) + "\n\n> ")
-    chosen_one = devices[int(id)-1]
-else:
-    chosen_one = devices[0]
+    # Set constants (they won't be changed again)
+    TMP_DIR = None;
+    PREVIOUS_DIR = os.getcwd();
+    DUMB_MODE = False;
+    if os.environ.get("TERM") == "dumb":
+        DUMB_MODE = True;
 
-print(" *** Selected device " + chosen_one)
+    # Register exit handler
+    atexit.register(on_exit);
 
-print(" *** Device detected! proceeding...")
 
-PREVIOUS_DIR = os.getcwd()
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-# pull framework somewhere temporary
-dirpath = tempfile.mkdtemp()
-os.chdir(dirpath)
-print(" *** Working dir: %s" % dirpath)
+def on_exit():
+    # Return to the previous working directory
+    os.chdir(PREVIOUS_DIR);
+    # Clean up
+    if TMP_DIR is not None:
+        shutil.rmtree(TMP_DIR+"/");
+    if sys.platform == "win32" and not DUMB_MODE:
+        import msvcrt;
+        msvcrt.getch();  # Wait a keypress before exit (useful when the script is running from a double click)
 
-print(" *** Rooting adbd...")
-subprocess.check_call(["adb", "-s", chosen_one, "root"])
-subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"])
-subprocess.check_call(["adb", "-s", chosen_one, "remount", "/system"])
 
-print(" *** Pulling framework from device...")
-subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."])
-shutil.copy2("framework.jar", "framework.jar.backup") # back it up in case things ever go wrong
+def exit(error_code):
+    if error_code != 0:
+        print_(os.linesep+"ERROR CODE:", error_code);
+    sys.exit(error_code);
 
-# disassemble it
-print(" *** Disassembling framework...")
-subprocess.check_call(["java", "-jar", os.path.join(SCRIPT_DIR, "tools", "baksmali.jar"), "framework.jar", "-o", "classes", "-ls"])
 
-# do the injection
-print(" *** Done. Now this won't hurt a bit...")
-to_patch = os.path.join("classes", "android", "content", "pm", "PackageParser.smali")
-if not os.path.exists(to_patch):
-    print(" *** ERROR: The file to patch cannot be found, probably the ROM is odexed.")
-    sys.exit(1)
+def verify_dependencies(mode):
+    from distutils.spawn import find_executable;
 
-f = open(to_patch, "r")
-old_contents = f.readlines()
-f.close()
+    def exec_exists(exec_name):
+        if find_executable(exec_name) is not None:
+            return True;
+        print_(os.linesep+"ERROR: Missing executable =>", exec_name);
+        return False;
 
-f = open(os.path.join(SCRIPT_DIR, "smali", "fillinsig.smali"), "r")
-fillinsig = f.readlines()
-f.close()
+    if mode == 1 and not exec_exists("adb"):
+        exit(65);
 
-# add fillinsig method
-i = 0
-contents = []
-already_patched = False
-in_function = False
-right_line = False
-start_of_line = None
-done_patching = False
-stored_register = "v11"
-partially_patched = False
+    if sys.platform == "linux-android":
+        if not exec_exists("dalvikvm") or not exec_exists("busybox") or not exec_exists("zip"):
+            exit(66);
+    else:
+        if not exec_exists("java") or not exec_exists(compression_program):
+            exit(67);
+
+
+def remove_ext(filename):
+    return filename.rsplit(".", 1)[0];
+
+
+def debug(msg):
+    print_("      DEBUG:", msg);
+
+
+def warning(msg, first_line=True):
+    if first_line:
+        print_("      WARNING:", msg);
+    else:
+        print_("              ", msg);
+
+
+def get_OS():
+    import platform;
+    return platform.system()+" "+platform.release();
+
+
+def parse_7za_version(output):
+    output = output[:output.index("Copyright")].strip(" :");
+    return output[output.rindex(" ")+1:];
+
+
+def display_info():
+    print_(os.linesep+"-----------------------");
+    print_("Name: "+__app__);
+    print_("Author: "+__author__+os.linesep);
+
+    print_("Installed dependencies:");
+    print_("- 7za "+parse_7za_version(subprocess.check_output([compression_program, "i"]).decode("utf-8")));
+    print_("-----------------------"+os.linesep);
+
+
+def input_byte(msg):
+    print_(msg, end="", flush=True);
+    if DUMB_MODE:
+        print_();
+        return "";
+    try:
+        val = sys.stdin.readline();
+        # KeyboardInterrupt leave a "", instead an empty value leave a "\n"
+        if val == "":
+            import time;
+            time.sleep(0.02);  # Give some time for the exception to being caught
+    except KeyboardInterrupt:
+        raise EOFError;
+    else:
+        return val.strip()[:1];
+
+
+def user_question(msg, max_val, default_val=1, show_question=True):
+    if show_question:
+        print_(msg);
+    try:
+        val = input_byte("> ");
+    except EOFError:
+        print_(os.linesep+os.linesep+"Killed by the user, now exiting ;)");
+        sys.exit(130);
+
+    if(val == ""):
+        print_("Used default value.");
+        return default_val;
+    elif(val == "i"):
+        display_info();
+        return user_question(msg, max_val, default_val, True);
+
+    try:
+        val = int(val);
+        if val > 0 and val <= max_val:
+            return val;
+    except ValueError:
+        pass;
+
+    print_("Invalid value, try again...");
+    return user_question(msg, max_val, default_val, False);
+
+
+def select_device():
+    # Start adb server before using it otherwise we get an unintended output inside other commands
+    subprocess.check_output(["adb", "start-server"]);
+    devices = subprocess.check_output(["adb", "devices"]).decode("utf-8");
+    if devices.count(os.linesep) <= 2:
+        print_(os.linesep+"ERROR: No device detected! Please connect your device first.");
+        exit(0);
+
+    devices = devices.split(os.linesep)[1:-2];
+    devices = [a.split("\t")[0] for a in devices];
+
+    if len(devices) > 1:
+        print_();
+        question = "Enter id of device to target:"+os.linesep+os.linesep+"    "+(os.linesep+"    ").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep;
+        id = user_question(question, len(devices));
+        chosen_one = devices[id-1];
+    else:
+        chosen_one = devices[0];
+    return chosen_one;
+
+
+def enable_device_writing(chosen_one):
+    root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
+    if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
+        print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
+        print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
+        exit(80);
+    debug(root_check.rstrip());
+    subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
+    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
+    debug(remount_check.rstrip());
+    if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
+        print_(os.linesep+"ERROR: Remount failed.");
+        exit(81);
+
+
+def safe_copy(orig, dest):
+    shutil.copyfile(orig, dest);
+    try:
+        shutil.copystat(orig, dest);  # It may fail on Android
+    except OSError:
+        warning("shutil.copystat has failed.");
+
+
+def safe_move(orig, dest):
+    if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
+        print_(os.linesep+"ERROR: Safe move fail.");  # ToDO: Notify error better
+        exit(85);
+    shutil.move(orig, dest);
+
+
+def safe_file_delete(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path);
+
+
+def brew_input_file(mode, chosen_one):
+    if mode == 1:
+        # Pull framework somewhere temporary
+        print_(" *** Pulling framework from device...");
+        output = subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT);
+        debug(output.decode("utf-8").rstrip());
+    elif mode == 2:
+        safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar");
+    else:
+        safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar");
+
+
+def decompress(file, out_dir):
+    debug("Decompressing "+file);
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir);
+    if sys.platform == "linux-android":
+        decomp_cmd = ["busybox", "unzip", "-oq", "-d", out_dir];
+    else:
+        decomp_cmd = [compression_program, "x", "-y", "-bd", "-tzip", "-o"+out_dir];
+    decomp_cmd.extend([file, "*.dex"]);
+
+    try:
+        subprocess.check_output(decomp_cmd);
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+"Return code: "+str(e.returncode));
+        exit(87);
+    return True;
+
+
+def compress(in_dir, file):
+    debug("Compressing "+file);
+    if sys.platform == "linux-android":
+        comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"];
+    else:
+        comp_cmd = [compression_program, "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"];
+
+    try:
+        subprocess.check_output(comp_cmd);
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+e.output.decode("utf-8").strip());
+        print_(os.linesep+"Cmd: "+str(e.cmd));
+        print_(os.linesep+"Return code: "+str(e.returncode));
+        exit(88);
+    return True;
+
+
+def disassemble(file, out_dir):
+    debug("Disassembling "+file);
+    if sys.platform == "linux-android":
+        disass_cmd = ["dalvikvm", "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"];
+    else:
+        disass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar"];
+    disass_cmd.extend(["-lsx", "-o"+out_dir, file]);
+
+    subprocess.check_call(disass_cmd);
+    return True;
+
+
+def assemble(in_dir, file, hide_output=False):
+    debug("Assembling "+file);
+    if sys.platform == "linux-android":
+        ass_cmd = ["dalvikvm", "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"];
+    else:
+        ass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/smali.jar"];
+    ass_cmd.extend(["-o"+file, in_dir]);
+
+    if hide_output:
+        return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT);
+    subprocess.check_call(ass_cmd);
+    return True;
+
+
+def find_smali(smali_to_search, dir):
+    dir_list = tuple(sorted(os.listdir(dir)));
+
+    if len(dir_list) == 0:
+        print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.");
+        exit(86);
+
+    for filename in dir_list:
+        out_dir = "./smali-"+remove_ext(filename)+"/";
+        disassemble(dir+filename, out_dir);
+        if os.path.exists(out_dir+smali_to_search):
+            return (out_dir, filename, dir_list[-1]);
+    return (None, None, None);
+
+
+def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
+    if(dex_filename == dex_filename_last):
+        print_(os.linesep+"ERROR");  # ToDO: Notify error better
+        exit(84);
+    print_(" *** Moving methods...");
+    warning("Experimental code.");
+    smali_dir = "./smali-"+remove_ext(dex_filename)+"/";
+    smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/";
+    disassemble(in_dir+dex_filename_last, smali_dir_last);
+    safe_move(smali_dir+"android/bluetooth/", smali_dir_last+"android/bluetooth/");
+    print_(" *** Reassembling classes...");
+    assemble(smali_dir, out_dir+dex_filename);
+    assemble(smali_dir_last, out_dir+dex_filename_last);
+    if sys.platform == "win32":
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename]);
+        subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last]);
+
+
+init();
+
+question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep;
+mode = user_question(question, 3, 2);
+
+verify_dependencies(mode);
+
+chosen_one = None;
+if mode == 1:
+    chosen_one = select_device();
+    if DEBUG_PROCESS:
+        print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE");
+
+print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")");
+print_(" *** Mode:", mode);
+
+TMP_DIR = tempfile.mkdtemp("", __app__+"-");
+os.chdir(TMP_DIR);
+print_(" *** Working dir: %s" % TMP_DIR);
+
+if mode == 1:
+    print_(" *** Selected device:", chosen_one);
+
+if DUMB_MODE:
+    exit(0);  # ToDO: Implement full test in dumb mode
+
+brew_input_file(mode, chosen_one);
+
+print_(" *** Decompressing framework...");
+decompress("framework.jar", "framework/");
+
+# Disassemble it
+print_(" *** Disassembling classes...");
+smali_to_search = "android/content/pm/PackageParser.smali";
+smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/");
+
+# Check the existence of the file to patch
+if smali_folder is None:
+    print_(os.linesep+"ERROR: The file to patch cannot be found, please report the problem.");
+    exit(82);
+to_patch = smali_folder+smali_to_search;
+
+# Do the injection
+print_(" *** Patching...");
+f = open(to_patch, "r");
+old_contents = f.readlines();
+f.close();
+
+f = open(SCRIPT_DIR+"/patches/fillinsig.smali", "r");
+fillinsig = f.readlines();
+f.close();
+
+# Add fillinsig method
+i = 0;
+contents = [];
+already_patched = False;
+in_function = False;
+right_line = False;
+start_of_line = None;
+done_patching = False;
+stored_register = "v11";
+partially_patched = False;
 
 while i < len(old_contents):
     if ";->fillinsig" in old_contents[i]:
-        already_patched = True
+        already_patched = True;
     if ".method public static fillinsig" in old_contents[i]:
-        partially_patched = True
+        partially_patched = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True
+        print_(" *** Detected: Android 6.0.x / CyanogenMod 13");
+        in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True
+        print_(" *** Detected: CyanogenMod 12");
+        in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True
+        print_(" *** Detected: Android 4.4.x / CyanogenMod 10-11");
+        in_function = True;
+    if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJ)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: CyanogenMod 7-9 - UNTESTED");
+        in_function = True;
+    if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[II)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: CyanogenMod 6 - UNTESTED");
+        in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;ZII)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        in_function = True
+        print_(" *** Detected: Alien Dalvik (Sailfish OS)");
+        in_function = True;
     if ".end method" in old_contents[i]:
-        in_function = False
+        in_function = False;
     if in_function and ".line" in old_contents[i]:
-        start_of_line = i + 1
+        start_of_line = i + 1;
     if in_function and "arraycopy" in old_contents[i]:
-        right_line = True
+        right_line = True;
     if in_function and "Landroid/content/pm/PackageInfo;-><init>()V" in old_contents[i]:
-        stored_register = old_contents[i].split("{")[1].split("}")[0]
+        stored_register = old_contents[i].split("{")[1].split("}")[0];
     if not already_patched and in_function and right_line and not done_patching:
-        contents = contents[:start_of_line]
-        contents.append("move-object/from16 v0, p0\n")
-        contents.append("invoke-static {%s, v0}, Landroid/content/pm/PackageParser;->fillinsig(Landroid/content/pm/PackageInfo;Landroid/content/pm/PackageParser$Package;)V\n" % stored_register)
-        done_patching = True
+        contents = contents[:start_of_line];
+        contents.append("move-object/from16 v0, p0\n");
+        contents.append("invoke-static {%s, v0}, Landroid/content/pm/PackageParser;->fillinsig(Landroid/content/pm/PackageInfo;Landroid/content/pm/PackageParser$Package;)V\n" % stored_register);
+        done_patching = True;
     else:
-        contents.append(old_contents[i])
-    i = i + 1
+        contents.append(old_contents[i]);
+    i = i + 1;
 
 if not DEBUG_PROCESS:
-    if not already_patched and not partially_patched:
-        contents.extend(fillinsig)
-    elif partially_patched and not already_patched:
-        print(" *** Previous failed patch attempt, not including the fillinsig method again...")
-    elif already_patched:
-        print(" *** This framework.jar appears to already have been patched... Exiting.")
-        sys.exit(0)
-    f = open(to_patch, "w")
-    contents = "".join(contents)
-    f.write(contents)
-    f.close()
+    if already_patched:
+        print_(" *** This framework.jar appears to have been already patched... Exiting.");
+        exit(0);
+    elif not done_patching:
+        print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.");
+        exit(89);
+    elif partially_patched:
+        print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
+    else:
+        contents.extend(fillinsig);
 
-# reassemble it
-print(" *** Injection successful. Reassembling smali...")
-subprocess.check_call(["java", "-jar", os.path.join(SCRIPT_DIR, "tools", "smali.jar"), "classes", "-o", "classes.dex"])
+    f = open(to_patch, "w");
+    contents = "".join(contents);
+    f.write(contents);
+    f.close();
+print_(" *** Patching succeeded.");
 
-# put classes.smali into framework.jar
-print(" *** Putting things back like nothing ever happened...")
-for f in glob.glob("classes*.dex"):
-    subprocess.check_call(["zip", "-r", "framework.jar", f])
+# Reassemble it
+print_(" *** Reassembling classes...");
+os.makedirs("out/");
 
-# push to device
-print(" *** Pushing changes to device...")
-if not DEBUG_PROCESS:
-    subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"])
+try:
+    assemble(smali_folder, "out/"+dex_filename, True);
+    if sys.platform == "win32":
+        subprocess.check_call(["attrib", "-a", "out/"+dex_filename]);
+except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
+    safe_file_delete(TMP_DIR+"/out/"+dex_filename);  # Remove incomplete file
+    output = e.output.decode("utf-8");
+    if e.returncode != 2 or "Unsigned short value out of range: 65536" not in output:
+        print_(os.linesep+output.strip());
+        print_(os.linesep+"Return code: "+str(e.returncode));
+        exit(83);
+    warning("The reassembling has failed (probably we have exceeded the 64K methods limit)");
+    warning("but do NOT worry, we will retry.", False);
+    move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/");
 
-print(" *** All done! :)")
-fjar = os.path.join(dirpath, "framework.jar.backup")
-print(" *** Your old framework.jar is present at %s, please run\n     \tadb push \"%s\" /system/framework/framework.jar\n     from recovery if your phone bootloops to recover." % (fjar, fjar))
+# Backup the original file
+safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.backup");
 
-# return to the previous working directory
-os.chdir(PREVIOUS_DIR)
-# clean up
-#shutil.rmtree(dirpath)
+# Put classes back in the archive
+print_(" *** Recompressing framework...");
+compress(os.curdir+"/out/", "framework.jar");
+
+# Copy the patched file to the output folder
+print_(" *** Copying the patched file to the output folder...");
+safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
+
+if mode == 1:
+    print_(" *** Rooting adbd...");
+    enable_device_writing(chosen_one);
+    # Push to device
+    print_(" *** Pushing changes to the device...");
+    try:
+        if not DEBUG_PROCESS:
+            output = subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
+            debug(output.decode("utf-8").rstrip());
+    except subprocess.CalledProcessError as e:
+        output = e.output.decode("utf-8");
+        debug(output.strip());
+        if e.returncode == 1 and "No space left on device" in output:
+            warning("Pushing has failed, we will retry from the recovery.");
+            subprocess.check_call(["adb", "-s", chosen_one, "reboot", "recovery"]);
+            subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
+            enable_device_writing(chosen_one);
+            subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"]);
+        else:
+            raise;
+    # Kill ADB server
+    subprocess.check_call(["adb", "kill-server"]);
+
+print_(" *** All done! :)");
+
+backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup");
+print_(os.linesep + "Your old framework.jar is present at "+backup_jar+", please run:");
+print_(" adb push \""+backup_jar+"\" /system/framework/framework.jar" + os.linesep + "from recovery if your phone bootloops to recover.");
