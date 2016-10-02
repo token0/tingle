@@ -4,7 +4,7 @@
 ## What this does
 This will allow you to patch the Android system and inject features without needing to recompile the OS or install Xposed.
 
-Notably, it is made to inject support for signature spoofing into the system so it can spoof android app signatures (Useful for [microG](https://microg.org/)).
+Notably, it is made to inject support for signature spoofing into the system so it can spoof Android app signatures (useful for [microG](https://microg.org/)).
 
 ## Compatibility
 Windows, Linux, macOS (OS X) and Android.  
