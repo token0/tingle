@@ -1,1 +1,1 @@
-PyCompatLayer >= 0.0.9
+PyCompatLayer >= 0.0.10
