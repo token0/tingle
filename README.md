@@ -11,7 +11,13 @@ Windows, Linux, macOS (OS X) and Android.
 It doesn't require root on the OS where you run it but it require root on the device you want to patch.
 
 ## How to use
-Make sure you have Python, Java and adb available, connect your device via usb. In the phone settings, find the setting for 'Android debugging' and enable it, and find the setting for 'Root Access' and make sure ADB has root access. Now, on the computer, run `python main.py` (or `python3 main.py`).
+1. Make sure you have Python, Java and adb available.
+2. Connect your device via USB.
+3. Make sure Developer Settings is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About Phone` and tapping on the build number five times in succession.
+4. In the device settings, find the setting for `Android debugging` and enable it.
+5. Find the setting for `Root Access` and make sure ADB has root access.
+6. Now, on the computer, run `python main.py` (or `python3 main.py`).
+7. Reboot the device.
 
 You will then need to reboot for Android to detect that you've installed a new framework and so for Dalvik/ART to re-optimise all the apps on the phone. Without this, you may receive an `INSTALL_FAILED_DEXOPT` error when installing new apps.
 
