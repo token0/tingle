@@ -10,6 +10,7 @@ import shutil;
 __app__ = "Tingle";
 __author__ = "ale5000, moosd";
 
+DEBUG_PROCESS = False;
 compression_program = "7za";
 if sys.platform == "win32":
     compression_program = "7za-w32";
@@ -422,21 +423,22 @@ while i < len(old_contents):
         contents.append(old_contents[i]);
     i = i + 1;
 
-if already_patched:
-    print_(" *** This framework.jar appears to have been already patched... Exiting.");
-    exit(0);
-elif not done_patching:
-    print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.");
-    exit(89);
-elif partially_patched:
-    print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
-else:
-    contents.extend(fillinsig);
+if not DEBUG_PROCESS:
+    if already_patched:
+        print_(" *** This framework.jar appears to have been already patched... Exiting.");
+        exit(0);
+    elif not done_patching:
+        print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.");
+        exit(89);
+    elif partially_patched:
+        print_(" *** Previous failed patch attempt, not including the fillinsig method again...");
+    else:
+        contents.extend(fillinsig);
 
-f = open(to_patch, "w");
-contents = "".join(contents);
-f.write(contents);
-f.close();
+    f = open(to_patch, "w");
+    contents = "".join(contents);
+    f.write(contents);
+    f.close();
 print_(" *** Patching succeeded.");
 
 # Reassemble it
@@ -475,8 +477,9 @@ if mode == 1:
     # Push to device
     print_(" *** Pushing changes to the device...");
     try:
-        output = subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
-        debug(output.decode("utf-8").rstrip());
+        if not DEBUG_PROCESS:
+            output = subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT);
+            debug(output.decode("utf-8").rstrip());
     except subprocess.CalledProcessError as e:
         output = e.output.decode("utf-8");
         debug(output.strip());
