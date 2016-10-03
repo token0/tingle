@@ -86,7 +86,8 @@ def remove_ext(filename):
 
 
 def debug(msg):
-    print_("      DEBUG:", msg);
+    if msg:
+        print_("      DEBUG:", msg);
 
 
 def warning(msg, first_line=True):
