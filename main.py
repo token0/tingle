@@ -500,5 +500,5 @@ if mode == 1:
 print_(" *** All done! :)");
 
 backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup");
-print_(os.linesep + "Your old framework.jar is present at "+backup_jar+", please run:");
-print_(" adb push \""+backup_jar+"\" /system/framework/framework.jar" + os.linesep + "from recovery if your phone bootloops to recover.");
+print_(os.linesep + "Your original file is present at "+backup_jar + os.linesep);
+print_("If your device bootloop, please run this when inside recovery:" + os.linesep + "adb push \""+backup_jar+"\" /system/framework/framework.jar");
