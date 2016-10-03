@@ -396,7 +396,7 @@ while i < len(old_contents):
         print_(" *** Detected: Android 7.0.x / Android 6.0.x / CyanogenMod 13-14");
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: CyanogenMod 12");
+        print_(" *** Detected: Android 5.x / CyanogenMod 12");
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Android 4.4.x / CyanogenMod 10-11");
