@@ -392,7 +392,7 @@ while i < len(old_contents):
     if ".method public static fillinsig" in old_contents[i]:
         partially_patched = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: Android 6.0.x / CyanogenMod 13");
+        print_(" *** Detected: Android 7.0.x / Android 6.0.x / CyanogenMod 13-14");
         in_function = True;
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: CyanogenMod 12");
