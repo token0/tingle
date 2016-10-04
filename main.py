@@ -11,6 +11,7 @@ __app__ = "Tingle";
 __author__ = "ale5000, moosd";
 
 DEBUG_PROCESS = False;
+UNLOCKED_ADB = False;
 compression_program = "7za";
 if sys.platform == "win32":
     compression_program = "7za-w32";
@@ -185,18 +186,31 @@ def select_device():
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...");
     root_check = subprocess.check_output(["adb", "-s", chosen_device, "root"]).decode("utf-8");
-    if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
+    if root_check.find("root access is disabled") == 0:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         exit(80);
     debug(root_check.rstrip());
+    if "adbd cannot run as root in production builds" in root_check:
+        return;
     subprocess.check_call(["adb", "-s", chosen_device, "wait-for-device"]);
+    global UNLOCKED_ADB;
+    UNLOCKED_ADB = True;
 
 
 def enable_device_writing(chosen_device):
     root_adbd(chosen_device);
-    remount_check = subprocess.check_output(["adb", "-s", chosen_device, "remount", "/system"]).decode("utf-8");
+    print_(" *** Unlocked ADB:", UNLOCKED_ADB);
+
+    print_(" *** Remounting /system...");
+    if(UNLOCKED_ADB):
+        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "remount", "/system"]).decode("utf-8");
+    else:
+        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system'"]).decode("utf-8");  # Untested
     debug(remount_check.rstrip());
+    if "su: not found" in remount_check:
+        print_(os.linesep+"ERROR: The device is NOT rooted.");
+        exit(81);
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.");
         exit(81);
