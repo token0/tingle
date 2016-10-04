@@ -182,15 +182,20 @@ def select_device():
     return chosen_one;
 
 
-def enable_device_writing(chosen_one):
-    root_check = subprocess.check_output(["adb", "-s", chosen_one, "root"]).decode("utf-8");
+def root_adbd(chosen_device):
+    print_(" *** Rooting adbd...");
+    root_check = subprocess.check_output(["adb", "-s", chosen_device, "root"]).decode("utf-8");
     if root_check.find("root access is disabled") == 0 or root_check.find("adbd cannot run as root") == 0:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.");
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.");
         exit(80);
     debug(root_check.rstrip());
-    subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"]);
-    remount_check = subprocess.check_output(["adb", "-s", chosen_one, "remount", "/system"]).decode("utf-8");
+    subprocess.check_call(["adb", "-s", chosen_device, "wait-for-device"]);
+
+
+def enable_device_writing(chosen_device):
+    root_adbd(chosen_device);
+    remount_check = subprocess.check_output(["adb", "-s", chosen_device, "remount", "/system"]).decode("utf-8");
     debug(remount_check.rstrip());
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.");
@@ -476,7 +481,6 @@ print_(" *** Copying the patched file to the output folder...");
 safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar");
 
 if mode == 1:
-    print_(" *** Rooting adbd...");
     enable_device_writing(chosen_one);
     # Push to device
     print_(" *** Pushing changes to the device...");
