@@ -206,11 +206,15 @@ def enable_device_writing(chosen_device):
     if(UNLOCKED_ADB):
         remount_check = subprocess.check_output(["adb", "-s", chosen_device, "remount", "/system"]).decode("utf-8");
     else:
-        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system'"]).decode("utf-8");  # Untested
+        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8");  # Untested
+        debug(remount_check.rstrip());
+        if "su: not found" in remount_check:
+            print_(os.linesep+"ERROR: The device is NOT rooted.");
+            exit(81);
+        if("rw," not in remount_check):
+            print_(os.linesep+"ERROR: Alternative remount failed.");
+            exit(81);
     debug(remount_check.rstrip());
-    if "su: not found" in remount_check:
-        print_(os.linesep+"ERROR: The device is NOT rooted.");
-        exit(81);
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.");
         exit(81);
