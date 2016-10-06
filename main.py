@@ -153,7 +153,7 @@ def user_question(msg, max_val, default_val=1, show_question=True):
 
     try:
         val = int(val);
-        if val > 0 and val <= max_val:
+        if 0 < val <= max_val:
             return val;
     except ValueError:
         pass;
@@ -211,7 +211,7 @@ def enable_device_writing(chosen_device):
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.");
             exit(81);
-        if("rw," not in remount_check):
+        if "rw," not in remount_check:
             print_(os.linesep+"ERROR: Alternative remount failed.");
             exit(81);
     debug(remount_check.rstrip());
