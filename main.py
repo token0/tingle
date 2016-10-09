@@ -452,7 +452,7 @@ while i < len(old_contents):
 
 if not DEBUG_PROCESS:
     if already_patched:
-        print_(" *** This framework.jar appears to have been already patched... Exiting.")
+        print_(" *** This file has been already patched... Exiting.")
         exit(0)
     elif not done_patching:
         print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.")
