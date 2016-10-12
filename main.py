@@ -10,6 +10,7 @@ import shutil
 __app__ = "Tingle"
 __author__ = "ale5000, moosd"
 
+DEPS_PATH = {}
 DEBUG_PROCESS = False
 UNLOCKED_ADB = False
 compression_program = "7za"
@@ -62,24 +63,28 @@ def exit(error_code):
     sys.exit(error_code)
 
 
-def verify_dependencies(mode):
+def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
-    def exec_exists(exec_name):
-        if find_executable(exec_name) is not None:
-            return True
-        print_(os.linesep+"ERROR: Missing executable =>", exec_name)
-        return False
-
-    if mode == 1 and not exec_exists("adb"):
-        exit(65)
-
+    errors = ""
     if sys.platform == "linux-android":
-        if not exec_exists("dalvikvm") or not exec_exists("busybox") or not exec_exists("zip"):
-            exit(66)
+        deps = ["dalvikvm", "busybox", "zip"]
     else:
-        if not exec_exists("java") or not exec_exists(compression_program):
-            exit(67)
+        deps = ["java", compression_program]
+
+    if mode == 1:
+        deps += ["adb"]
+
+    for dep in deps:
+        path = find_executable(dep)
+        if path is not None:
+            deps_path[dep] = path
+        else:
+            errors += os.linesep+"ERROR: Missing executable => " + dep
+
+    if errors:
+        print_(errors)
+        exit(65)
 
 
 def remove_ext(filename):
@@ -352,7 +357,7 @@ init()
 question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep
 mode = user_question(question, 3, 2)
 
-verify_dependencies(mode)
+handle_dependencies(DEPS_PATH, mode)
 
 chosen_one = None
 if mode == 1:
