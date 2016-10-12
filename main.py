@@ -13,9 +13,6 @@ __author__ = "ale5000, moosd"
 DEPS_PATH = {}
 DEBUG_PROCESS = False
 UNLOCKED_ADB = False
-compression_program = "7za"
-if sys.platform == "win32":
-    compression_program = "7za-w32"
 
 
 def init():
@@ -70,17 +67,20 @@ def handle_dependencies(deps_path, mode):
     if sys.platform == "linux-android":
         deps = ["dalvikvm", "busybox", "zip"]
     else:
-        deps = ["java", compression_program]
+        deps = ["java", "7za"]
 
     if mode == 1:
         deps += ["adb"]
 
     for dep in deps:
-        path = find_executable(dep)
-        if path is not None:
-            deps_path[dep] = path
+        path = find_executable(dep+"-"+sys.platform)
+        if path is None:
+            path = find_executable(dep)
+
+        if path is None:
+            errors += os.linesep + "ERROR: Missing executable => "+dep
         else:
-            errors += os.linesep+"ERROR: Missing executable => " + dep
+            deps_path[dep] = path
 
     if errors:
         print_(errors)
@@ -119,7 +119,7 @@ def display_info():
     print_("Author: "+__author__+os.linesep)
 
     print_("Installed dependencies:")
-    print_("- 7za "+parse_7za_version(subprocess.check_output([compression_program, "i"]).decode("utf-8")))
+    print_("- 7za "+parse_7za_version(subprocess.check_output(["7za", "i"]).decode("utf-8")))
     print_("-----------------------"+os.linesep)
 
 
@@ -264,7 +264,7 @@ def decompress(file, out_dir):
     if sys.platform == "linux-android":
         decomp_cmd = ["busybox", "unzip", "-oq", "-d", out_dir]
     else:
-        decomp_cmd = [compression_program, "x", "-y", "-bd", "-tzip", "-o"+out_dir]
+        decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
     decomp_cmd.extend([file, "*.dex"])
 
     try:
@@ -281,7 +281,7 @@ def compress(in_dir, file):
     if sys.platform == "linux-android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
-        comp_cmd = [compression_program, "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
+        comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
 
     try:
         subprocess.check_output(comp_cmd)
