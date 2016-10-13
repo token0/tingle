@@ -245,6 +245,10 @@ def safe_file_delete(file_path):
         os.remove(file_path)
 
 
+def clean_dalvik_cache(file):
+    safe_file_delete("/data/dalvik-cache/"+file[1:].replace("/", "@")+"@classes.dex")
+
+
 def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
@@ -302,6 +306,8 @@ def disassemble(file, out_dir):
     disass_cmd.extend(["-lsx", "-o"+out_dir, file])
 
     subprocess.check_call(disass_cmd)
+    if sys.platform == "linux-android":
+        clean_dalvik_cache(SCRIPT_DIR+"/tools/baksmali-dvk.jar")
     return True
 
 
@@ -316,6 +322,8 @@ def assemble(in_dir, file, hide_output=False):
     if hide_output:
         return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT)
     subprocess.check_call(ass_cmd)
+    if sys.platform == "linux-android":
+        clean_dalvik_cache(SCRIPT_DIR+"/tools/smali-dvk.jar")
     return True
 
 
