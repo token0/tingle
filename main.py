@@ -262,7 +262,7 @@ def decompress(file, out_dir):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     if sys.platform == "linux-android":
-        decomp_cmd = ["busybox", "unzip", "-oq", "-d", out_dir]
+        decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
     else:
         decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
     decomp_cmd.extend([file, "*.dex"])
@@ -296,7 +296,7 @@ def compress(in_dir, file):
 def disassemble(file, out_dir):
     debug("Disassembling "+file)
     if sys.platform == "linux-android":
-        disass_cmd = ["dalvikvm", "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"]
+        disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"]
     else:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
     disass_cmd.extend(["-lsx", "-o"+out_dir, file])
@@ -308,7 +308,7 @@ def disassemble(file, out_dir):
 def assemble(in_dir, file, hide_output=False):
     debug("Assembling "+file)
     if sys.platform == "linux-android":
-        ass_cmd = ["dalvikvm", "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"]
+        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"]
     else:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar"]
     ass_cmd.extend(["-o"+file, in_dir])
