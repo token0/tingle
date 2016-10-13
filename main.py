@@ -169,8 +169,8 @@ def user_question(msg, max_val, default_val=1, show_question=True):
 
 def select_device():
     # Start adb server before using it otherwise we get an unintended output inside other commands
-    subprocess.check_output(["adb", "start-server"])
-    devices = subprocess.check_output(["adb", "devices"]).decode("utf-8")
+    subprocess.check_output([DEPS_PATH["adb"], "start-server"])
+    devices = subprocess.check_output([DEPS_PATH["adb"], "devices"]).decode("utf-8")
     if devices.count(os.linesep) <= 2:
         print_(os.linesep+"ERROR: No device detected! Please connect your device first.")
         exit(0)
@@ -190,7 +190,7 @@ def select_device():
 
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...")
-    root_check = subprocess.check_output(["adb", "-s", chosen_device, "root"]).decode("utf-8")
+    root_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]).decode("utf-8")
     if root_check.find("root access is disabled") == 0:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.")
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.")
@@ -198,7 +198,7 @@ def root_adbd(chosen_device):
     debug(root_check.rstrip())
     if "adbd cannot run as root in production builds" in root_check:
         return
-    subprocess.check_call(["adb", "-s", chosen_device, "wait-for-device"])
+    subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
     global UNLOCKED_ADB
     UNLOCKED_ADB = True
 
@@ -209,9 +209,9 @@ def enable_device_writing(chosen_device):
 
     print_(" *** Remounting /system...")
     if(UNLOCKED_ADB):
-        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "remount", "/system"]).decode("utf-8")
+        remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "remount", "/system"]).decode("utf-8")
     else:
-        remount_check = subprocess.check_output(["adb", "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8")  # Untested
+        remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8")  # Untested
         debug(remount_check.rstrip())
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.")
@@ -249,7 +249,7 @@ def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...")
-        output = subprocess.check_output(["adb", "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
+        output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
         debug(output.decode("utf-8").rstrip())
     elif mode == 2:
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
@@ -509,21 +509,21 @@ if mode == 1:
     print_(" *** Pushing changes to the device...")
     try:
         if not DEBUG_PROCESS:
-            output = subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
+            output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
             debug(output.decode("utf-8").rstrip())
     except subprocess.CalledProcessError as e:
         output = e.output.decode("utf-8")
         debug(output.strip())
         if e.returncode == 1 and "No space left on device" in output:
             warning("Pushing has failed, we will retry from the recovery.")
-            subprocess.check_call(["adb", "-s", chosen_one, "reboot", "recovery"])
-            subprocess.check_call(["adb", "-s", chosen_one, "wait-for-device"])
+            subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_one, "reboot", "recovery"])
+            subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_one, "wait-for-device"])
             enable_device_writing(chosen_one)
-            subprocess.check_output(["adb", "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"])
+            subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"])
         else:
             raise
     # Kill ADB server
-    subprocess.check_call(["adb", "kill-server"])
+    subprocess.check_call([DEPS_PATH["adb"], "kill-server"])
 
 print_(" *** All done! :)")
 
