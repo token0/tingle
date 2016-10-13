@@ -298,7 +298,7 @@ def disassemble(file, out_dir):
     if sys.platform == "linux-android":
         disass_cmd = ["dalvikvm", "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"]
     else:
-        disass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
+        disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
     disass_cmd.extend(["-lsx", "-o"+out_dir, file])
 
     subprocess.check_call(disass_cmd)
@@ -310,7 +310,7 @@ def assemble(in_dir, file, hide_output=False):
     if sys.platform == "linux-android":
         ass_cmd = ["dalvikvm", "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"]
     else:
-        ass_cmd = ["java", "-jar", SCRIPT_DIR+"/tools/smali.jar"]
+        ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar"]
     ass_cmd.extend(["-o"+file, in_dir])
 
     if hide_output:
