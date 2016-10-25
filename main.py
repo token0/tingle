@@ -12,7 +12,7 @@ __author__ = "ale5000, moosd"
 
 DEPS_PATH = {}
 DEBUG_PROCESS = False
-UNLOCKED_ADB = False
+UNLOCKED_ADB = True
 
 
 def init():
@@ -190,17 +190,24 @@ def select_device():
 
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...")
-    root_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]).decode("utf-8")
-    if root_check.find("root access is disabled") == 0:
+    root_output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]).decode("utf-8")
+
+    if "root access is disabled" in root_output:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.")
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.")
         exit(80)
-    debug(root_check.rstrip())
-    if "adbd cannot run as root in production builds" in root_check:
+
+    debug(root_output.rstrip())
+
+    if "adbd is already running as root" in root_output:
         return
+
+    if "adbd cannot run as root in production builds" in root_output:
+        global UNLOCKED_ADB
+        UNLOCKED_ADB = False
+        return
+
     subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
-    global UNLOCKED_ADB
-    UNLOCKED_ADB = True
 
 
 def enable_device_writing(chosen_device):
