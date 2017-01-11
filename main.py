@@ -553,4 +553,7 @@ print_(" *** All done! :)")
 
 backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup")
 print_(os.linesep + "Your original file is present at "+backup_jar)
-print_(os.linesep + "If your device bootloop, please run this command on the pc when the connected device is inside recovery:" + os.linesep + "adb push \""+backup_jar+"\" /system/framework/framework.jar")
+if mode != 3:
+    print_(os.linesep + "If your device bootloop, please run this command on the pc when the connected device is inside recovery:" + os.linesep + "adb push \""+backup_jar+"\" /system/framework/framework.jar")
+else:
+    print_(os.linesep + "Now you should replace the file on your system with the patched file in the output folder.")
