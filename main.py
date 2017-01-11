@@ -370,6 +370,8 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
 init()
 
 question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep
+if sys.platform == "linux-android":
+    question += "    3 - Patch file directly from the device"+os.linesep
 mode = user_question(question, 3, 2)
 
 handle_dependencies(DEPS_PATH, mode)
