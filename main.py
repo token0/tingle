@@ -260,9 +260,16 @@ def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...")
-        output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
+        try:
+            output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            print_(os.linesep+"ERROR: "+e.output.decode("utf-8").strip())
+            exit(90)
         debug(output.decode("utf-8").rstrip())
     elif mode == 2:
+        if not os.path.exists(SCRIPT_DIR+"/input/framework.jar"):
+            print_(os.linesep+"ERROR: The input file cannot be found.")
+            exit(91)
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
     else:
         safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar")
