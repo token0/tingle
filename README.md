@@ -17,7 +17,8 @@ It doesn't require root on the OS where you run it but it require root on the de
 4. Find the setting for `Root access` and make sure ADB has root access.
 5. Connect your device via USB.
 6. Now, on the computer, run `python main.py` (or `python3 main.py`).
-7. Reboot the device.
+7. Select the option 1 to allow the patcher to do everything automatically.
+8. Reboot the device.
 
 You can run this patcher also when the device is in Android's recovery (provided /system is mounted).
 
