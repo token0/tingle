@@ -12,7 +12,7 @@ It doesn't require root on the OS where you run it but it require root on the de
 
 ## How to use
 1. Make sure you have Python, Java and ADB available.
-2. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` five times in succession.
+2. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` seven times in succession.
 3. In the developer settings, find the setting for `Android debugging` and enable it.
 4. Find the setting for `Root access` and make sure ADB has root access.
 5. Connect your device via USB.
