@@ -383,9 +383,9 @@ mode = user_question(question, 3, 2)
 
 handle_dependencies(DEPS_PATH, mode)
 
-chosen_one = None
+SELECTED_DEVICE = "Manual"
 if mode == 1:
-    chosen_one = select_device()
+    SELECTED_DEVICE = select_device()
     if DEBUG_PROCESS:
         print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE")
 
@@ -397,12 +397,16 @@ os.chdir(TMP_DIR)
 print_(" *** Working dir: %s" % TMP_DIR)
 
 if mode == 1:
-    print_(" *** Selected device:", chosen_one)
+    print_(" *** Selected device:", SELECTED_DEVICE)
+
+OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", SELECTED_DEVICE)
+if not os.path.exists(OUTPUT_PATH):
+    os.makedirs(OUTPUT_PATH)
 
 if DUMB_MODE:
     exit(0)  # ToDO: Implement full test in dumb mode
 
-brew_input_file(mode, chosen_one)
+brew_input_file(mode, SELECTED_DEVICE)
 
 print_(" *** Decompressing framework...")
 decompress("framework.jar", "framework/")
@@ -517,7 +521,8 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/")
 
 # Backup the original file
-safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar.backup")
+BACKUP_FILE = os.path.join(OUTPUT_PATH, "framework.jar.backup")
+safe_copy(os.path.join(TMP_DIR, "framework.jar"), BACKUP_FILE)
 
 # Put classes back in the archive
 print_(" *** Recompressing framework...")
@@ -525,25 +530,25 @@ compress(os.curdir+"/out/", "framework.jar")
 
 # Copy the patched file to the output folder
 print_(" *** Copying the patched file to the output folder...")
-safe_copy(TMP_DIR+"/framework.jar", SCRIPT_DIR+"/output/framework.jar")
+safe_copy(os.path.join(TMP_DIR, "framework.jar"), os.path.join(OUTPUT_PATH, "framework.jar"))
 
 if mode == 1:
-    enable_device_writing(chosen_one)
+    enable_device_writing(SELECTED_DEVICE)
     # Push to device
     print_(" *** Pushing changes to the device...")
     try:
         if not DEBUG_PROCESS:
-            output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
+            output = subprocess.check_output([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
             debug(output.decode("utf-8").rstrip())
     except subprocess.CalledProcessError as e:
         output = e.output.decode("utf-8")
         debug(output.strip())
         if e.returncode == 1 and "No space left on device" in output:
             warning("Pushing has failed, we will retry from the recovery.")
-            subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_one, "reboot", "recovery"])
-            subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_one, "wait-for-device"])
-            enable_device_writing(chosen_one)
-            subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "push", "framework.jar", "/system/framework/framework.jar"])
+            subprocess.check_call([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "reboot", "recovery"])
+            subprocess.check_call([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "wait-for-device"])
+            enable_device_writing(SELECTED_DEVICE)
+            subprocess.check_output([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"])
         else:
             raise
     # Kill ADB server
@@ -551,9 +556,8 @@ if mode == 1:
 
 print_(" *** All done! :)")
 
-backup_jar = os.path.join(SCRIPT_DIR, "output", "framework.jar.backup")
-print_(os.linesep + "Your original file is present at "+backup_jar)
+print_(os.linesep + "Your original file is present at "+BACKUP_FILE)
 if mode != 3:
-    print_(os.linesep + "If your device bootloop, please run this command on the pc when the connected device is inside recovery:" + os.linesep + "adb push \""+backup_jar+"\" /system/framework/framework.jar")
+    print_(os.linesep + "If your device bootloop, please run this command on the pc when the connected device is inside recovery:" + os.linesep + "adb push \""+BACKUP_FILE+"\" /system/framework/framework.jar")
 else:
     print_(os.linesep + "Now you should replace the file on your system with the patched file in the output folder.")
