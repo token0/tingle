@@ -253,6 +253,7 @@ def safe_file_delete(file_path):
 
 
 def clean_dalvik_cache(file):
+    safe_file_delete("/data/dalvik-cache/"+file[1:].replace("/", "@")+"@classes.art")
     safe_file_delete("/data/dalvik-cache/"+file[1:].replace("/", "@")+"@classes.dex")
 
 
