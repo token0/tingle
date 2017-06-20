@@ -55,10 +55,10 @@ def on_exit():
         msvcrt.getch()  # Wait a keypress before exit (useful when the script is running from a double click)
 
 
-def exit(error_code):
-    if error_code != 0:
-        print_(os.linesep+"ERROR CODE:", error_code)
-    sys.exit(error_code)
+def exit_now(err_code):
+    if err_code != 0:
+        print_(os.linesep+"ERROR CODE:", err_code)
+    sys.exit(err_code)
 
 
 def handle_dependencies(deps_path, mode):
@@ -85,7 +85,7 @@ def handle_dependencies(deps_path, mode):
 
     if errors:
         print_(errors)
-        exit(65)
+        exit_now(65)
 
 
 def remove_ext(filename):
@@ -174,7 +174,7 @@ def select_device():
     devices = subprocess.check_output([DEPS_PATH["adb"], "devices"]).decode("utf-8")
     if devices.count(os.linesep) <= 2:
         print_(os.linesep+"ERROR: No device detected! Please connect your device first.")
-        exit(0)
+        exit_now(0)
 
     devices = devices.split(os.linesep)[1:-2]
     devices = [a.split("\t")[0] for a in devices]
@@ -182,8 +182,8 @@ def select_device():
     if len(devices) > 1:
         print_()
         question = "Enter id of device to target:"+os.linesep+os.linesep+"    "+(os.linesep+"    ").join([str(i)+" - "+a for i, a in zip(range(1, len(devices)+1), devices)])+os.linesep
-        id = user_question(question, len(devices))
-        chosen_one = devices[id-1]
+        dev_id = user_question(question, len(devices))
+        chosen_one = devices[dev_id-1]
     else:
         chosen_one = devices[0]
     return chosen_one
@@ -196,7 +196,7 @@ def root_adbd(chosen_device):
     if "root access is disabled" in root_output:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.")
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.")
-        exit(80)
+        exit_now(80)
 
     debug(root_output.rstrip())
 
@@ -223,14 +223,14 @@ def enable_device_writing(chosen_device):
         debug(remount_check.rstrip())
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.")
-            exit(81)
+            exit_now(81)
         if "rw," not in remount_check:
             print_(os.linesep+"ERROR: Alternative remount failed.")
-            exit(81)
+            exit_now(81)
     debug(remount_check.rstrip())
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.")
-        exit(81)
+        exit_now(81)
 
 
 def safe_copy(orig, dest):
@@ -244,7 +244,7 @@ def safe_copy(orig, dest):
 def safe_move(orig, dest):
     if not os.path.exists(orig) or os.path.exists(dest.rstrip("/")):
         print_(os.linesep+"ERROR: Safe move fail.")  # ToDO: Notify error better
-        exit(85)
+        exit_now(85)
     shutil.move(orig, dest)
 
 
@@ -266,12 +266,12 @@ def brew_input_file(mode, chosen_one):
             output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print_(os.linesep+"ERROR: "+e.output.decode("utf-8").strip())
-            exit(90)
+            exit_now(90)
         debug(output.decode("utf-8").rstrip())
     elif mode == 2:
         if not os.path.exists(SCRIPT_DIR+"/input/framework.jar"):
             print_(os.linesep+"ERROR: The input file cannot be found.")
-            exit(91)
+            exit_now(91)
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
     else:
         safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar")
@@ -292,7 +292,7 @@ def decompress(file, out_dir):
     except subprocess.CalledProcessError as e:
         print_(os.linesep+e.output.decode("utf-8").strip())
         print_(os.linesep+"Return code: "+str(e.returncode))
-        exit(87)
+        exit_now(87)
     return True
 
 
@@ -309,7 +309,7 @@ def compress(in_dir, file):
         print_(os.linesep+e.output.decode("utf-8").strip())
         print_(os.linesep+"Cmd: "+str(e.cmd))
         print_(os.linesep+"Return code: "+str(e.returncode))
-        exit(88)
+        exit_now(88)
     return True
 
 
@@ -348,7 +348,7 @@ def find_smali(smali_to_search, dir):
 
     if len(dir_list) == 0:
         print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.")
-        exit(86)
+        exit_now(86)
 
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/"
@@ -361,7 +361,7 @@ def find_smali(smali_to_search, dir):
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     if(dex_filename == dex_filename_last):
         print_(os.linesep+"ERROR")  # ToDO: Notify error better
-        exit(84)
+        exit_now(84)
     print_(" *** Moving methods...")
     warning("Experimental code.")
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"
@@ -406,7 +406,7 @@ if not os.path.exists(OUTPUT_PATH):
     os.makedirs(OUTPUT_PATH)
 
 if DUMB_MODE:
-    exit(0)  # ToDO: Implement full test in dumb mode
+    exit_now(0)  # ToDO: Implement full test in dumb mode
 
 brew_input_file(mode, SELECTED_DEVICE)
 
@@ -421,7 +421,7 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 # Check the existence of the file to patch
 if smali_folder is None:
     print_(os.linesep+"ERROR: The file to patch cannot be found, please report the problem.")
-    exit(82)
+    exit_now(82)
 to_patch = smali_folder+smali_to_search
 
 # Do the injection
@@ -488,10 +488,10 @@ while i < len(old_contents):
 if not DEBUG_PROCESS:
     if already_patched:
         print_(" *** This file has been already patched... Exiting.")
-        exit(0)
+        exit_now(0)
     elif not done_patching:
         print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.")
-        exit(89)
+        exit_now(89)
     elif partially_patched:
         print_(" *** Previous failed patch attempt, not including the fillinsig method again...")
     else:
@@ -517,7 +517,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     if e.returncode != 2 or "Unsigned short value out of range: 65536" not in output:
         print_(os.linesep+output.strip())
         print_(os.linesep+"Return code: "+str(e.returncode))
-        exit(83)
+        exit_now(83)
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)")
     warning("but do NOT worry, we will retry.", False)
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/")
