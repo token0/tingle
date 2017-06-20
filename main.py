@@ -343,8 +343,8 @@ def assemble(in_dir, file, hide_output=False):
     return True
 
 
-def find_smali(smali_to_search, dir):
-    dir_list = tuple(sorted(os.listdir(dir)))
+def find_smali(smali_to_search, search_dir):
+    dir_list = tuple(sorted(os.listdir(search_dir)))
 
     if len(dir_list) == 0:
         print_(os.linesep+"ERROR: No dex file(s) found, probably the ROM is odexed.")
@@ -352,7 +352,7 @@ def find_smali(smali_to_search, dir):
 
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/"
-        disassemble(dir+filename, out_dir)
+        disassemble(search_dir+filename, out_dir)
         if os.path.exists(out_dir+smali_to_search):
             return (out_dir, filename, dir_list[-1])
     return (None, None, None)
