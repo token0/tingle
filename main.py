@@ -28,6 +28,7 @@ def init():
         os.system("TITLE "+__app__)
 
     # Activate Python compatibility layer
+    pycompatlayer.set_utf8_default()
     pycompatlayer.fix_all()
 
     # Add tools folder to search path (used from subprocess)
