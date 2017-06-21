@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """PyCompatLayer - Compatibility layer for Python.
 
 It make all versions of Python behaving as the latest version of Python 3.
@@ -7,10 +9,19 @@ It is still under development, not all functions are supported.
 
 import sys
 
-__version__ = "0.0.10-1"
+__version__ = "0.0.10-2"
 __author__ = "ale5000"
-__copyright__ = "Copyright (C) 2016, ale5000"
+__copyright__ = "Copyright (C) 2016-2017, ale5000"
 __license__ = "LGPLv3+"
+
+
+def set_utf8_default():
+    if sys.getdefaultencoding() != "utf-8":
+        try:
+            reload(sys)
+            sys.setdefaultencoding("utf-8")
+        except NameError:
+            pass
 
 
 def fix_base(fix_environ):
@@ -22,9 +33,9 @@ def fix_base(fix_environ):
             os.environ["LD_LIBRARY_PATH"] = "."
 
         lib64_path = ""
-        lib32_path = os.pathsep + "/system/lib"
+        lib32_path = os.pathsep+"/system/lib"+os.pathsep+"/vendor/lib"
         if os.path.exists("/system/lib64"):
-            lib64_path = os.pathsep + "/system/lib64"
+            lib64_path = os.pathsep+"/system/lib64"+os.pathsep+"/vendor/lib64"
 
         os.environ["LD_LIBRARY_PATH"] += lib64_path + lib32_path
 
@@ -84,9 +95,10 @@ def fix_builtins(override_debug=False):
         if opt["flush"]:
             opt["file"].flush()
 
-    def _sorted(list):
-        list.sort()
-        return list
+    def _sorted(my_list):
+        my_list=list(my_list)
+        my_list.sort()
+        return my_list
 
     if builtins_dict.get(__name__, False):
         raise RuntimeError(__name__+" already loaded")
@@ -123,12 +135,12 @@ def fix_subprocess(override_debug=False, override_exception=False):
         """This exception is raised when a process run by check_call() or check_output() returns a non-zero exit status."""
         def __init__(self, returncode, cmd, output=None, stderr=None):
             try:
-                super(self.__class__, self).__init__(returncode=returncode, cmd=cmd, output=output, stderr=stderr)
+                super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd, output=output, stderr=stderr)
             except TypeError:
                 try:
-                    super(self.__class__, self).__init__(returncode=returncode, cmd=cmd, output=output)
+                    super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd, output=output)
                 except TypeError:
-                    super(self.__class__, self).__init__(returncode=returncode, cmd=cmd)
+                    super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd)
                     self.output = output
                 self.stdout = output
                 self.stderr = stderr
