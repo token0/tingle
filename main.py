@@ -393,6 +393,7 @@ if mode == 1:
         print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE")
 
 print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")")
+print_(" *** Python:", str(sys.version_info[0])+"."+str(sys.version_info[1])+"."+str(sys.version_info[2]), "("+str(sys.python_bits), "bit"+")")
 print_(" *** Mode:", mode)
 
 TMP_DIR = tempfile.mkdtemp("", __app__+"-")
