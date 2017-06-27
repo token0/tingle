@@ -53,6 +53,9 @@ def fix_base(fix_environ):
     if fix_environ and sys.platform == "linux-android":
         _fix_android_environ()
 
+    # Useful custom variables
+    sys.python_bits = 64 if sys.maxsize > 2**32 else 32
+
 
 def fix_builtins(override_debug=False):
     """Activate the builtins compatibility."""
@@ -131,16 +134,21 @@ def fix_subprocess(override_debug=False, override_exception=False):
     """Activate the subprocess compatibility."""
     import subprocess
 
-    class ExtendedCalledProcessError(subprocess.CalledProcessError):
-        """This exception is raised when a process run by check_call() or check_output() returns a non-zero exit status."""
+    class ExtCalledProcessError(subprocess.CalledProcessError):
+        """Raised when a process run by check_call() or check_output()
+        returns a non-zero exit status."""
+
         def __init__(self, returncode, cmd, output=None, stderr=None):
             try:
-                super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd, output=output, stderr=stderr)
+                super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                            cmd=cmd, output=output, stderr=stderr)
             except TypeError:
                 try:
-                    super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd, output=output)
+                    super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                                cmd=cmd, output=output)
                 except TypeError:
-                    super(ExtendedCalledProcessError, self).__init__(returncode=returncode, cmd=cmd)
+                    super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                                cmd=cmd)
                     self.output = output
                 self.stdout = output
                 self.stderr = stderr
@@ -158,7 +166,7 @@ def fix_subprocess(override_debug=False, override_exception=False):
             cmd = kwargs.get("args")
             if cmd is None:
                 cmd = args[0]
-            raise ExtendedCalledProcessError(returncode=ret_code, cmd=cmd, output=stdout_data)
+            raise ExtCalledProcessError(returncode=ret_code, cmd=cmd, output=stdout_data)
         return stdout_data
 
     try:
@@ -172,3 +180,4 @@ def fix_all(override_debug=False, override_all=False):
     fix_base(True)
     fix_builtins(override_debug)
     fix_subprocess(override_debug, override_all)
+    return True
