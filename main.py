@@ -453,19 +453,19 @@ while i < len(old_contents):
     if ".method public static fillinsig" in old_contents[i]:
         partially_patched = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: Android 7.x / Android 6.0.x / CyanogenMod 13-14")
+        print_(" *** Detected: Android 7.x / Android 6.0.x (or LOS/CM 13-14.x)")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLandroid/util/ArraySet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: Android 5.x / CyanogenMod 12")
+        print_(" *** Detected: Android 5.x (or CM 12)")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: Android 4.4.x / CyanogenMod 10-11")
+        print_(" *** Detected: Android 4.4.x (or CM 10-11)")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJ)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: CyanogenMod 7-9 - UNTESTED")
+        print_(" *** Detected: CM 7-9 - UNTESTED")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[II)Landroid/content/pm/PackageInfo;" in old_contents[i]:
-        print_(" *** Detected: CyanogenMod 6 - UNTESTED")
+        print_(" *** Detected: CM 6 - UNTESTED")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/HashSet;ZII)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Alien Dalvik (Sailfish OS)")
