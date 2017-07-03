@@ -327,13 +327,15 @@ def compress(in_dir, file):
     return True
 
 
-def disassemble(file, out_dir):
+def disassemble(file, out_dir, device_sdk):
     debug("Disassembling "+file)
     if sys.platform == "linux-android":
         disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"]
     else:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
     disass_cmd.extend(["-lsx", "-o"+out_dir, file])
+    if device_sdk is not None:
+        disass_cmd.extend(["-a", device_sdk])
 
     subprocess.check_call(disass_cmd)
     if sys.platform == "linux-android":
@@ -341,13 +343,15 @@ def disassemble(file, out_dir):
     return True
 
 
-def assemble(in_dir, file, hide_output=False):
+def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
     if sys.platform == "linux-android":
         ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"]
     else:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar"]
     ass_cmd.extend(["-o"+file, in_dir])
+    if device_sdk is not None:
+        ass_cmd.extend(["-a", device_sdk])
 
     if hide_output:
         return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT)
@@ -366,13 +370,13 @@ def find_smali(smali_to_search, search_dir, device_sdk):
 
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/"
-        disassemble(search_dir+filename, out_dir)
+        disassemble(search_dir+filename, out_dir, device_sdk)
         if os.path.exists(out_dir+smali_to_search):
             return (out_dir, filename, dir_list[-1])
     return (None, None, None)
 
 
-def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
+def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir, device_sdk):
     if(dex_filename == dex_filename_last):
         print_(os.linesep+"ERROR")  # ToDO: Notify error better
         exit_now(84)
@@ -380,11 +384,11 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir):
     warning("Experimental code.")
     smali_dir = "./smali-"+remove_ext(dex_filename)+"/"
     smali_dir_last = "./smali-"+remove_ext(dex_filename_last)+"/"
-    disassemble(in_dir+dex_filename_last, smali_dir_last)
+    disassemble(in_dir+dex_filename_last, smali_dir_last, device_sdk)
     safe_move(smali_dir+"android/bluetooth/", smali_dir_last+"android/bluetooth/")
     print_(" *** Reassembling classes...")
-    assemble(smali_dir, out_dir+dex_filename)
-    assemble(smali_dir_last, out_dir+dex_filename_last)
+    assemble(smali_dir, out_dir+dex_filename, device_sdk)
+    assemble(smali_dir_last, out_dir+dex_filename_last, device_sdk)
     if sys.platform == "win32":
         subprocess.check_call(["attrib", "-a", out_dir+dex_filename])
         subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last])
@@ -424,7 +428,9 @@ if DUMB_MODE:
     exit_now(0)  # ToDO: Implement full test in dumb mode
 
 brew_input_file(mode, SELECTED_DEVICE)
-DEVICE_SDK = parse_sdk_ver("build.prop")
+DEVICE_SDK = None
+if os.path.exists("build.prop"):
+    DEVICE_SDK = parse_sdk_ver("build.prop")
 
 print_(" *** Decompressing framework...")
 decompress("framework.jar", "framework/")
@@ -524,7 +530,7 @@ print_(" *** Reassembling classes...")
 os.makedirs("out/")
 
 try:
-    assemble(smali_folder, "out/"+dex_filename, True)
+    assemble(smali_folder, "out/"+dex_filename, DEVICE_SDK, True)
     if sys.platform == "win32":
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename])
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
@@ -536,7 +542,7 @@ except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
         exit_now(83)
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)")
     warning("but do NOT worry, we will retry.", False)
-    move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/")
+    move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/", DEVICE_SDK)
 
 # Backup the original file
 BACKUP_FILE = os.path.join(OUTPUT_PATH, "framework.jar.backup")
