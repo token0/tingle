@@ -265,6 +265,7 @@ def brew_input_file(mode, chosen_one):
         print_(" *** Pulling framework from device...")
         try:
             output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."], stderr=subprocess.STDOUT)
+            subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/build.prop", "."], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             print_(os.linesep+"ERROR: "+e.output.decode("utf-8").strip())
             exit_now(90)
@@ -276,6 +277,18 @@ def brew_input_file(mode, chosen_one):
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
     else:
         safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar")
+
+
+def parse_sdk_ver(filename):
+    search_term = "ro.build.version.sdk=".encode("utf-8")
+    fo = open(filename, "rb")
+    try:
+        for line in fo:
+            if line.find(search_term) == 0:
+                return line.rstrip().decode("utf-8")[21:]
+    finally:
+        fo.close()
+    return None
 
 
 def decompress(file, out_dir):
@@ -344,7 +357,7 @@ def assemble(in_dir, file, hide_output=False):
     return True
 
 
-def find_smali(smali_to_search, search_dir):
+def find_smali(smali_to_search, search_dir, device_sdk):
     dir_list = tuple(sorted(os.listdir(search_dir)))
 
     if len(dir_list) == 0:
@@ -411,6 +424,7 @@ if DUMB_MODE:
     exit_now(0)  # ToDO: Implement full test in dumb mode
 
 brew_input_file(mode, SELECTED_DEVICE)
+DEVICE_SDK = parse_sdk_ver("build.prop")
 
 print_(" *** Decompressing framework...")
 decompress("framework.jar", "framework/")
@@ -418,7 +432,7 @@ decompress("framework.jar", "framework/")
 # Disassemble it
 print_(" *** Disassembling classes...")
 smali_to_search = "android/content/pm/PackageParser.smali"
-smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/")
+smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/", DEVICE_SDK)
 
 # Check the existence of the file to patch
 if smali_folder is None:
