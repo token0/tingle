@@ -330,10 +330,10 @@ def compress(in_dir, file):
 def disassemble(file, out_dir, device_sdk):
     debug("Disassembling "+file)
     if sys.platform == "linux-android":
-        disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.main"]
+        disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.Main"]
     else:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
-    disass_cmd.extend(["-lsx", "-o"+out_dir, file])
+    disass_cmd.extend(["dis", "-l", "--seq", "-o", out_dir, file])
     if device_sdk is not None:
         disass_cmd.extend(["-a", device_sdk])
 
@@ -346,10 +346,10 @@ def disassemble(file, out_dir, device_sdk):
 def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
     if sys.platform == "linux-android":
-        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.main", "-j1"]
+        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "-j1"]
     else:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar"]
-    ass_cmd.extend(["-o"+file, in_dir])
+    ass_cmd.extend(["ass", "-o", file, in_dir])
     if device_sdk is not None:
         ass_cmd.extend(["-a", device_sdk])
 
