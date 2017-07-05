@@ -13,7 +13,15 @@ It doesn't require root on the OS where you run it but it require root on the de
 ## Dependencies
 Python, 7-Zip, Java and ADB.
 
-###  Dependencies setup on macOS (using Homebrew)
+### Dependencies setup on Linux
+* `sudo add-apt-repository universe`
+* `sudo apt-get update`
+* `sudo apt-get install python3`
+* `sudo apt-get install p7zip-full`
+* `sudo apt-get install default-jre`
+* `sudo apt-get install android-tools-adb`
+
+### Dependencies setup on macOS (using Homebrew)
 * `brew update`
 * `brew install python3`
 * `brew install p7zip`
