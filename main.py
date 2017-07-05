@@ -259,6 +259,18 @@ def clean_dalvik_cache(file):
     safe_file_delete("/data/dalvik-cache/"+file[1:].replace("/", "@")+"@classes.dex")
 
 
+def parse_sdk_ver(filename):
+    search_term = "ro.build.version.sdk=".encode("utf-8")
+    fo = open(filename, "rb")
+    try:
+        for line in fo:
+            if line.find(search_term) == 0:
+                return line.rstrip().decode("utf-8")[21:]
+    finally:
+        fo.close()
+    return None
+
+
 def brew_input_file(mode, chosen_one):
     if mode == 1:
         # Pull framework somewhere temporary
@@ -275,20 +287,9 @@ def brew_input_file(mode, chosen_one):
             print_(os.linesep+"ERROR: The input file cannot be found.")
             exit_now(91)
         safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
+        safe_copy(SCRIPT_DIR+"/input/build.prop", TMP_DIR+"/build.prop")
     else:
         safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar")
-
-
-def parse_sdk_ver(filename):
-    search_term = "ro.build.version.sdk=".encode("utf-8")
-    fo = open(filename, "rb")
-    try:
-        for line in fo:
-            if line.find(search_term) == 0:
-                return line.rstrip().decode("utf-8")[21:]
-    finally:
-        fo.close()
-    return None
 
 
 def decompress(file, out_dir):
@@ -431,6 +432,7 @@ brew_input_file(mode, SELECTED_DEVICE)
 DEVICE_SDK = None
 if os.path.exists("build.prop"):
     DEVICE_SDK = parse_sdk_ver("build.prop")
+    print_(" *** Device SDK:", DEVICE_SDK)
 
 print_(" *** Decompressing framework...")
 decompress("framework.jar", "framework/")
