@@ -10,15 +10,24 @@ Notably, it is made to inject support for signature spoofing into the system so 
 Windows, Linux, macOS (OS X) and Android.  
 It doesn't require root on the OS where you run it but it require root on the device you want to patch.
 
+## Dependencies
+Python, 7-Zip, Java and ADB.
+
+###  Dependencies setup on macOS (using Homebrew)
+* `brew update`
+* `brew install python3`
+* `brew install p7zip`
+* `brew cask install java`
+* `brew cask install android-platform-tools`
+
 ## How to use
-1. Make sure you have Python, Java and ADB available.
-2. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` seven times in succession.
-3. In the developer settings, find the setting for `Android debugging` and enable it.
-4. Find the setting for `Root access` and make sure ADB has root access.
-5. Connect your device via USB.
-6. Now, on the computer, run `python main.py` (or `python3 main.py`).
-7. Select the option 1 to allow the patcher to do everything automatically.
-8. Reboot the device.
+1. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` seven times in succession.
+2. In the developer settings, find the setting for `Android debugging` and enable it.
+3. Find the setting for `Root access` and make sure ADB has root access.
+4. Connect your device via USB.
+5. Now, on the computer, run `python main.py` (or `python3 main.py`).
+6. Select the option 1 to allow the patcher to do everything automatically.
+7. Reboot the device.
 
 You can run this patcher also when the device is in Android's recovery (provided /system is mounted).
 
