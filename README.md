@@ -16,10 +16,7 @@ Python, 7-Zip, Java and ADB.
 ### Dependencies setup on Linux
 * `sudo add-apt-repository universe`
 * `sudo apt-get update`
-* `sudo apt-get install python3`
-* `sudo apt-get install p7zip-full`
-* `sudo apt-get install default-jre`
-* `sudo apt-get install android-tools-adb`
+* `sudo apt-get install python3 p7zip-full default-jre android-tools-adb`
 
 ### Dependencies setup on macOS (using Homebrew)
 * `brew update`
