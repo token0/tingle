@@ -538,7 +538,7 @@ try:
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     safe_file_delete(TMP_DIR+"/out/"+dex_filename)  # Remove incomplete file
     output = e.output.decode("utf-8")
-    if e.returncode != 2 or "Unsigned short value out of range: 65536" not in output:
+    if e.returncode != 1 or "Unsigned short value out of range: 65536" not in output:
         print_(os.linesep+output.strip())
         print_(os.linesep+"Return code: "+str(e.returncode))
         exit_now(83)
