@@ -416,7 +416,7 @@ print_(" *** Mode:", mode)
 
 TMP_DIR = tempfile.mkdtemp("", __app__+"-")
 os.chdir(TMP_DIR)
-print_(" *** Working dir: %s" % TMP_DIR)
+print_(str(" *** Working dir: {}").format(TMP_DIR))
 
 if mode == 1:
     print_(" *** Selected device:", SELECTED_DEVICE)
