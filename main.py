@@ -347,10 +347,10 @@ def disassemble(file, out_dir, device_sdk):
 def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
     if sys.platform == "linux-android":
-        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "-j1"]
+        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "assemble", "-j", "1"]
     else:
-        ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar"]
-    ass_cmd.extend(["ass", "-o", file, in_dir])
+        ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar", "assemble"]
+    ass_cmd.extend(["-o", file, in_dir])
     if device_sdk is not None:
         ass_cmd.extend(["-a", device_sdk])
 
