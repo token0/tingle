@@ -190,6 +190,11 @@ def select_device():
     return chosen_one
 
 
+def adb_automount_if_needed(chosen_device, partition):
+    print_(" *** Automounting "+partition+"...")
+    output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"]).decode("utf-8")
+    debug(output.rstrip())
+
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...")
     root_output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]).decode("utf-8")
@@ -273,6 +278,7 @@ def parse_sdk_ver(filename):
 
 def brew_input_file(mode, chosen_one):
     if mode == 1:
+        adb_automount_if_needed(chosen_one, "/system")
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...")
         try:
