@@ -44,4 +44,3 @@ Note: You will need to redo this everytime you flash a new /system partition (e.
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6f54e54bf5bf43c1ad8fd73e26f7ce79)](https://www.codacy.com/app/ale5000-git/tingle?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ale5000-git/tingle&amp;utm_campaign=Badge_Grade)
 [![Codebeat Badge](https://codebeat.co/badges/1e76f80a-957c-44df-9075-9cde78fb2093)](https://codebeat.co/projects/github-com-ale5000-git-tingle-master)
 [![Code Climate Badge](https://codeclimate.com/github/ale5000-git/tingle/badges/gpa.svg)](https://codeclimate.com/github/ale5000-git/tingle)
-[![Code Issues](https://www.quantifiedcode.com/api/v1/project/d7226552d9f74cb3867fc217d66179cd/badge.svg)](https://www.quantifiedcode.com/app/project/d7226552d9f74cb3867fc217d66179cd)
