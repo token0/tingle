@@ -187,7 +187,7 @@ def select_device():
     subprocess.check_output([DEPS_PATH["adb"], "start-server"])
     devices = subprocess.check_output([DEPS_PATH["adb"], "devices"]).decode("utf-8")
     if devices.count(os.linesep) <= 2:
-        print_(os.linesep+"ERROR: No device detected! Please connect your device first.")
+        print_(os.linesep+"ERROR: No device detected! This mean that no device is connected or that your device have 'Android debugging' disabled.")
         exit_now(0)
 
     devices = devices.split(os.linesep)[1:-2]
