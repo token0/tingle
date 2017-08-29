@@ -427,7 +427,7 @@ mode = user_question(question, 3, 2)
 
 handle_dependencies(DEPS_PATH, mode)
 
-SELECTED_DEVICE = "Manual"
+SELECTED_DEVICE = "ManualMode"
 if mode == 1:
     if safe_subprocess_run([DEPS_PATH["adb"], "version"]) is False:
         print_(os.linesep+"ERROR: ADB is not setup correctly.")
