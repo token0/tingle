@@ -110,6 +110,19 @@ def get_OS():
     return platform.system()+" "+platform.release()
 
 
+def safe_subprocess_run(command):
+    try:
+        return subprocess.check_output(command, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+"ERROR INFO")
+        print_("==========")
+        print_("Output: "+e.output.decode("utf-8").strip())
+        print_("Cmd: "+str(e.cmd))
+        print_("Return code: "+str(e.returncode))
+
+    return False
+
+
 def parse_7za_version(output):
     output = output[:output.index("Copyright")].strip(" :")
     return output[output.rindex(" ")+1:]
@@ -192,8 +205,13 @@ def select_device():
 
 def adb_automount_if_needed(chosen_device, partition):
     print_(" *** Automounting "+partition+"...")
-    output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"]).decode("utf-8")
-    debug(output.rstrip())
+    output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"])
+
+    if output is False:
+        exit_now(93)
+
+    debug(output.decode("utf-8").strip())
+
 
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...")
@@ -412,6 +430,10 @@ handle_dependencies(DEPS_PATH, mode)
 
 SELECTED_DEVICE = "Manual"
 if mode == 1:
+    if safe_subprocess_run([DEPS_PATH["adb"], "version"]) is False:
+        print_(os.linesep+"ERROR: ADB is not setup correctly.")
+        exit_now(92)
+
     SELECTED_DEVICE = select_device()
     if DEBUG_PROCESS:
         print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE")
