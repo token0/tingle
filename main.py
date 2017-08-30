@@ -110,7 +110,7 @@ def get_OS():
     return platform.system()+" "+platform.release()
 
 
-def safe_subprocess_run(command):
+def safe_subprocess_run(command, raise_error=True):
     try:
         return subprocess.check_output(command, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
@@ -119,6 +119,9 @@ def safe_subprocess_run(command):
         print_("Output: "+e.output.decode("utf-8").strip())
         print_("Cmd: "+str(e.cmd))
         print_("Return code: "+str(e.returncode))
+        if raise_error:
+            print_()
+            raise
 
     return False
 
@@ -205,7 +208,7 @@ def select_device():
 
 def adb_automount_if_needed(chosen_device, partition):
     print_(" *** Automounting "+partition+"...")
-    output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"])
+    output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"], False)
 
     if output is False:
         exit_now(93)
@@ -429,7 +432,7 @@ handle_dependencies(DEPS_PATH, mode)
 
 SELECTED_DEVICE = "ManualMode"
 if mode == 1:
-    if safe_subprocess_run([DEPS_PATH["adb"], "version"]) is False:
+    if safe_subprocess_run([DEPS_PATH["adb"], "version"], False) is False:
         print_(os.linesep+"ERROR: ADB is not setup correctly.")
         exit_now(92)
 
