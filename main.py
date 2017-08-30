@@ -208,11 +208,7 @@ def select_device():
 
 def adb_automount_if_needed(chosen_device, partition):
     print_(" *** Automounting "+partition+"...")
-    output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"], False)
-
-    if output is False:
-        exit_now(93)
-
+    output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"])
     debug(output.decode("utf-8").strip())
 
 
