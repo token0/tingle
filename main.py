@@ -126,6 +126,27 @@ def safe_subprocess_run(command, raise_error=True):
     return False
 
 
+def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
+    if "TimeoutExpired" not in subprocess.__dict__:
+        return safe_subprocess_run(command, raise_error)
+
+    try:
+        return subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        print_(os.linesep+"WARNING: The command exceeded timeout, continuing anyway."+os.linesep)
+    except subprocess.CalledProcessError as e:
+        print_(os.linesep+"ERROR INFO")
+        print_("==========")
+        print_("Output: "+e.output.decode("utf-8").strip())
+        print_("Cmd: "+str(e.cmd))
+        print_("Return code: "+str(e.returncode))
+        if raise_error:
+            print_()
+            raise
+
+    return False
+
+
 def parse_7za_version(output):
     output = output[:output.index("Copyright")].strip(" :")
     return output[output.rindex(" ")+1:]
@@ -231,7 +252,9 @@ def root_adbd(chosen_device):
         UNLOCKED_ADB = False
         return
 
-    subprocess.check_call([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
+    output = safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
+    if output is not False:
+        debug(output.decode("utf-8").strip())
 
 
 def enable_device_writing(chosen_device):
