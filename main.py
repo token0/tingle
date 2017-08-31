@@ -122,6 +122,15 @@ def safe_subprocess_run(command, raise_error=True):
         if raise_error:
             print_()
             raise
+    except OSError:
+        type, e = sys.exc_info()[:2]
+        print_(os.linesep+"ERROR INFO")
+        print_("==========")
+        print_("Type: "+str(type))
+        print_("Name: "+str(e.strerror), "("+str(e.errno)+")")
+        if raise_error:
+            print_()
+            raise
 
     return False
 
@@ -140,6 +149,15 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
         print_("Output: "+e.output.decode("utf-8").strip())
         print_("Cmd: "+str(e.cmd))
         print_("Return code: "+str(e.returncode))
+        if raise_error:
+            print_()
+            raise
+    except OSError:
+        type, e = sys.exc_info()[:2]
+        print_(os.linesep+"ERROR INFO")
+        print_("==========")
+        print_("Type: "+str(type))
+        print_("Name: "+str(e.strerror), "("+str(e.errno)+")")
         if raise_error:
             print_()
             raise
