@@ -111,30 +111,30 @@ def get_OS():
 
 
 def display_error_info(e_type, text, raise_error=True):
-        print_(os.linesep+"ERROR INFO")
-        print_("==========")
-        print_("Type: "+str(e_type))
-        print_(text)
-        if raise_error:
-            print_()
-            raise
+    print_(os.linesep+"ERROR INFO")
+    print_("==========")
+    print_("Type: "+str(e_type))
+    print_(text)
+    if raise_error:
+        print_()
+        return True
+
+    return False
 
 
 def safe_subprocess_run(command, raise_error=True):
     try:
         return subprocess.check_output(command, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        print_(os.linesep+"ERROR INFO")
-        print_("==========")
-        print_("Output: "+e.output.decode("utf-8").strip())
-        print_("Cmd: "+str(e.cmd))
-        print_("Return code: "+str(e.returncode))
-        if raise_error:
-            print_()
+    except subprocess.CalledProcessError:
+        e_type, e = sys.exc_info()[:2]
+        e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
+        e_text += "Output: "+e.output.decode("utf-8").strip()
+        if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
         e_type, e = sys.exc_info()[:2]
-        display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error)
+        if display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error):
+            raise
 
     return False
 
@@ -147,18 +147,16 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
         return subprocess.check_output(command, stderr=subprocess.STDOUT, timeout=timeout)
     except subprocess.TimeoutExpired:
         print_(os.linesep+"WARNING: The command exceeded timeout, continuing anyway."+os.linesep)
-    except subprocess.CalledProcessError as e:
-        print_(os.linesep+"ERROR INFO")
-        print_("==========")
-        print_("Output: "+e.output.decode("utf-8").strip())
-        print_("Cmd: "+str(e.cmd))
-        print_("Return code: "+str(e.returncode))
-        if raise_error:
-            print_()
+    except subprocess.CalledProcessError:
+        e_type, e = sys.exc_info()[:2]
+        e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
+        e_text += "Output: "+e.output.decode("utf-8").strip()
+        if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
         e_type, e = sys.exc_info()[:2]
-        display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error)
+        if display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error):
+            raise
 
     return False
 
