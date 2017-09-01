@@ -34,7 +34,7 @@ Python, 7-Zip, Java and ADB.
 6. Select the option 1 to allow the patcher to do everything automatically.
 7. Reboot the device.
 
-You can run this patcher also when the device is in Android's recovery (provided /system is mounted).
+You can run this patcher also when the device is in Android's recovery.
 
 You will need to reboot for Android to detect that you've installed a new framework and so for Dalvik/ART to re-optimise all the apps on the phone. Without this, you may receive an `INSTALL_FAILED_DEXOPT` error when installing new apps.
 
