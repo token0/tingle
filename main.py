@@ -275,7 +275,9 @@ def enable_device_writing(chosen_device):
 
     print_(" *** Remounting /system...")
     if(UNLOCKED_ADB):
-        remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "remount"]).decode("utf-8")
+        remount_check = safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "remount"])
+        if remount_check is not False:
+            remount_check = remount_check.decode("utf-8")
     else:
         remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8")  # Untested
         debug(remount_check)
