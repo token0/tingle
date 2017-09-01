@@ -95,7 +95,7 @@ def remove_ext(filename):
 
 def debug(text):
     if text:
-        print_("      DEBUG:", str(msg).strip())
+        print_("      DEBUG:", str(text).strip())
 
 
 def warning(msg, first_line=True):
