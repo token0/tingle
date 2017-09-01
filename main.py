@@ -110,6 +110,16 @@ def get_OS():
     return platform.system()+" "+platform.release()
 
 
+def display_error_info(e_type, text, raise_error=True):
+        print_(os.linesep+"ERROR INFO")
+        print_("==========")
+        print_("Type: "+str(e_type))
+        print_(text)
+        if raise_error:
+            print_()
+            raise
+
+
 def safe_subprocess_run(command, raise_error=True):
     try:
         return subprocess.check_output(command, stderr=subprocess.STDOUT)
@@ -123,14 +133,8 @@ def safe_subprocess_run(command, raise_error=True):
             print_()
             raise
     except OSError:
-        type, e = sys.exc_info()[:2]
-        print_(os.linesep+"ERROR INFO")
-        print_("==========")
-        print_("Type: "+str(type))
-        print_("Name: "+str(e.strerror), "("+str(e.errno)+")")
-        if raise_error:
-            print_()
-            raise
+        e_type, e = sys.exc_info()[:2]
+        display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error)
 
     return False
 
@@ -153,14 +157,8 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
             print_()
             raise
     except OSError:
-        type, e = sys.exc_info()[:2]
-        print_(os.linesep+"ERROR INFO")
-        print_("==========")
-        print_("Type: "+str(type))
-        print_("Name: "+str(e.strerror), "("+str(e.errno)+")")
-        if raise_error:
-            print_()
-            raise
+        e_type, e = sys.exc_info()[:2]
+        display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error)
 
     return False
 
