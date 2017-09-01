@@ -330,7 +330,6 @@ def parse_sdk_ver(filename):
 
 def brew_input_file(mode, chosen_one):
     if mode == 1:
-        adb_automount_if_needed(chosen_one, "/system")
         # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...")
         try:
@@ -489,7 +488,11 @@ if not os.path.exists(OUTPUT_PATH):
 if DUMB_MODE:
     exit_now(0)  # ToDO: Implement full test in dumb mode
 
+if mode == 1:
+    adb_automount_if_needed(SELECTED_DEVICE, "/system")
+
 brew_input_file(mode, SELECTED_DEVICE)
+
 DEVICE_SDK = None
 if os.path.exists("build.prop"):
     DEVICE_SDK = parse_sdk_ver("build.prop")
