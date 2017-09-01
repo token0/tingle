@@ -242,7 +242,7 @@ def select_device():
 def adb_automount_if_needed(chosen_device, partition):
     print_(" *** Automounting "+partition+" (if not already mounted)...")
     output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"])
-    debug(output.decode("utf-8").strip())
+    debug(output.decode("utf-8"))
 
 
 def root_adbd(chosen_device):
@@ -254,7 +254,7 @@ def root_adbd(chosen_device):
         print_(os.linesep+"Enable it in Settings -> Developer options -> Root access -> Apps and ADB.")
         exit_now(80)
 
-    debug(root_output.rstrip())
+    debug(root_output)
 
     if "adbd is already running as root" in root_output:
         return
@@ -266,7 +266,7 @@ def root_adbd(chosen_device):
 
     output = safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
     if output is not False:
-        debug(output.decode("utf-8").strip())
+        debug(output.decode("utf-8"))
 
 
 def enable_device_writing(chosen_device):
@@ -278,14 +278,14 @@ def enable_device_writing(chosen_device):
         remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "remount"]).decode("utf-8")
     else:
         remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8")  # Untested
-        debug(remount_check.rstrip())
+        debug(remount_check)
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.")
             exit_now(81)
         if "rw," not in remount_check:
             print_(os.linesep+"ERROR: Alternative remount failed.")
             exit_now(81)
-    debug(remount_check.rstrip())
+    debug(remount_check)
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.")
         exit_now(81)
