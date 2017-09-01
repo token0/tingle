@@ -93,9 +93,9 @@ def remove_ext(filename):
     return filename.rsplit(".", 1)[0]
 
 
-def debug(msg):
-    if msg:
-        print_("      DEBUG:", msg)
+def debug(text):
+    if text:
+        print_("      DEBUG:", str(msg).strip())
 
 
 def warning(msg, first_line=True):
