@@ -110,11 +110,9 @@ def get_OS():
     return platform.system()+" "+platform.release()
 
 
-def display_error_info(e_type, text, raise_error=True):
-    print_(os.linesep+"ERROR INFO")
-    print_("==========")
-    print_("Type: "+str(e_type))
-    print_(text)
+def display_error_info(e_type, text, raise_error):
+    print_(os.linesep + "ERROR INFO" + os.linesep + "==========")
+    print_("Type: "+str(e_type) + os.linesep + text)
     if raise_error:
         print_()
         return True
