@@ -20,9 +20,10 @@ def init():
     global SCRIPT_DIR, TMP_DIR, PREVIOUS_DIR, DUMB_MODE
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-    sys.path.append(os.path.join(SCRIPT_DIR, "libs"))
-    import atexit
+    import libraries
     import pycompatlayer
+
+    import atexit
 
     if sys.platform == "win32":
         os.system("TITLE "+__app__)
