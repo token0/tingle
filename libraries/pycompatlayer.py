@@ -9,22 +9,75 @@ It is still under development, not all functions are supported.
 
 import sys
 
-__version__ = "0.0.10.dev4"
+__version__ = "0.0.10.dev5"
 __author__ = "ale5000"
 __copyright__ = "Copyright (C) 2016-2017, ale5000"
 __license__ = "LGPLv3+"
 
 
-class _Internal:
+class _InternalReferences(object):
+    """For internal use only."""
+    UsedCalledProcessError = None
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError(cls.__doc__)
+
+
+class _Internal(object):
     """For internal use only."""
 
+    def __new__(cls, *args, **kwargs):
+        raise TypeError(cls.__doc__)
+
+    class SubprocessError(Exception):
+        pass
+
     class ExtStr(str):
-        def format(format_spec, value):  # Largely incomplete
-            format_spec = format_spec.replace("{}", "%s").replace("{0}", "%s").replace("{:", "%").replace("}", "")
-            return format_spec % (value, )
+        def format(format_string, *args, **kwargs):  # Largely incomplete (it only use the first value of args)
+            format_string = format_string.replace("{}", "%s").replace("{0}", "%s").replace("{:", "%").replace("}", "")
+            return format_string % (args[0], )
 
         def __format__(value, format_spec):  # Largely incomplete
             return "%"+format_spec % (value, )
+
+
+def _subprocess_called_process_error(already_exist, subprocess_lib):
+    if already_exist:
+        class ExtCalledProcessError(subprocess_lib.CalledProcessError):
+            """Raised when a process run by check_call() or check_output()
+            returns a non-zero exit status."""
+
+            def __init__(self, returncode, cmd, output=None, stderr=None):
+                try:
+                    super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                                cmd=cmd, output=output, stderr=stderr)
+                except TypeError:
+                    try:
+                        super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                                    cmd=cmd, output=output)
+                    except TypeError:
+                        super(ExtCalledProcessError, self).__init__(returncode=returncode,
+                                                                    cmd=cmd)
+                        self.output = output
+                    self.stdout = output
+                    self.stderr = stderr
+
+        _InternalReferences.UsedCalledProcessError = ExtCalledProcessError
+    else:
+        class CalledProcessError(subprocess_lib.SubprocessError):
+            """Raised when a process run by check_call() or check_output()
+            returns a non-zero exit status."""
+
+            def __init__(self, returncode, cmd, output=None, stderr=None):
+                subprocess_lib.SubprocessError.__init__(self, "Command '" + str(cmd) + "' returned non-zero exit status " + str(returncode))
+                self.returncode = returncode
+                self.cmd = cmd
+                self.output = output
+                self.stdout = output
+                self.stderr = stderr
+
+        _InternalReferences.UsedCalledProcessError = CalledProcessError
+
 
 
 def set_default_encoding(encoding="utf-8"):
@@ -32,7 +85,7 @@ def set_default_encoding(encoding="utf-8"):
         try:
             reload(sys)
             sys.setdefaultencoding(encoding)
-        except NameError:
+        except (NameError, AttributeError):
             pass
 
 
@@ -126,6 +179,10 @@ def fix_builtins(override_debug=False):
     if builtins_dict.get(__name__, False):
         raise RuntimeError(__name__+" already loaded")
 
+    # Exceptions
+    if builtins_dict.get("BaseException") is None:
+        override_dict["BaseException"] = Exception
+
     if 'format' not in str.__dict__:
         override_dict["str"] = _Internal.ExtStr
     # Function 'input'
@@ -159,38 +216,15 @@ def fix_subprocess(override_debug=False, override_exception=False):
     """Activate the subprocess compatibility."""
     import subprocess
 
-    class CalledProcessError(Exception):
-        """Raised when a process run by check_call() or check_output()
-        returns a non-zero exit status."""
-
-        def __init__(self, returncode, cmd, output=None, stderr=None):
-            self.returncode = returncode
-            self.cmd = cmd
-            self.output = output
-            self.stdout = output
-            self.stderr = stderr
-
-    if "CalledProcessError" not in subprocess.__dict__:
-        subprocess.CalledProcessError = CalledProcessError
-
-    class ExtCalledProcessError(subprocess.CalledProcessError):
-        """Raised when a process run by check_call() or check_output()
-        returns a non-zero exit status."""
-
-        def __init__(self, returncode, cmd, output=None, stderr=None):
-            try:
-                super(ExtCalledProcessError, self).__init__(returncode=returncode,
-                                                            cmd=cmd, output=output, stderr=stderr)
-            except TypeError:
-                try:
-                    super(ExtCalledProcessError, self).__init__(returncode=returncode,
-                                                                cmd=cmd, output=output)
-                except TypeError:
-                    super(ExtCalledProcessError, self).__init__(returncode=returncode,
-                                                                cmd=cmd)
-                    self.output = output
-                self.stdout = output
-                self.stderr = stderr
+    # Exceptions
+    if subprocess.__dict__.get("SubprocessError") is None:
+        subprocess.SubprocessError = _Internal.SubprocessError
+    if _InternalReferences.UsedCalledProcessError is None:
+        if "CalledProcessError" in subprocess.__dict__:
+            _subprocess_called_process_error(True, subprocess)
+        else:
+            _subprocess_called_process_error(False, subprocess)
+            subprocess.CalledProcessError = _InternalReferences.UsedCalledProcessError
 
     def _check_output(*args, **kwargs):
         if "stdout" in kwargs:
@@ -205,7 +239,7 @@ def fix_subprocess(override_debug=False, override_exception=False):
             cmd = kwargs.get("args")
             if cmd is None:
                 cmd = args[0]
-            raise ExtCalledProcessError(returncode=ret_code, cmd=cmd, output=stdout_data)
+            raise _InternalReferences.UsedCalledProcessError(returncode=ret_code, cmd=cmd, output=stdout_data)
         return stdout_data
 
     try:
