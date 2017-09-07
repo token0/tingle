@@ -338,7 +338,7 @@ def brew_input_file(mode, chosen_one):
         try:
             safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."])
             safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/build.prop", "."])
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, OSError):
             exit_now(90)
     elif mode == 2:
         if not os.path.exists(SCRIPT_DIR+"/input/framework.jar"):
@@ -361,10 +361,8 @@ def decompress(file, out_dir):
     decomp_cmd.extend([file, "*.dex"])
 
     try:
-        subprocess.check_output(decomp_cmd)
-    except subprocess.CalledProcessError as e:
-        print_(os.linesep+e.output.decode("utf-8").strip())
-        print_(os.linesep+"Return code: "+str(e.returncode))
+        safe_subprocess_run(decomp_cmd)
+    except (subprocess.CalledProcessError, OSError):
         exit_now(87)
     return True
 
@@ -374,14 +372,11 @@ def compress(in_dir, file):
     if sys.platform == "linux-android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
-        comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
+        comp_cmd = [DEPS_PATH["7za"], "a_", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
 
     try:
-        subprocess.check_output(comp_cmd)
-    except subprocess.CalledProcessError as e:
-        print_(os.linesep+e.output.decode("utf-8").strip())
-        print_(os.linesep+"Cmd: "+str(e.cmd))
-        print_(os.linesep+"Return code: "+str(e.returncode))
+        safe_subprocess_run(comp_cmd)
+    except (subprocess.CalledProcessError, OSError):
         exit_now(88)
     return True
 
