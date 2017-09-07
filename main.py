@@ -372,7 +372,7 @@ def compress(in_dir, file):
     if sys.platform == "linux-android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
-        comp_cmd = [DEPS_PATH["7za"], "a_", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
+        comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
 
     try:
         safe_subprocess_run(comp_cmd)
