@@ -7,6 +7,7 @@ It will allow to add compatibility with all versions of Python without effort.
 It is still under development, not all functions are supported.
 """
 
+from __future__ import nested_scopes
 import sys
 
 __version__ = "0.0.10.dev5"
@@ -118,13 +119,18 @@ def fix_base(fix_environ):
     if fix_environ and sys.platform == "linux-android":
         _fix_android_environ()
 
-    if 'maxsize' not in sys.__dict__:
-        sys.maxsize = 2147483647  # Assume this if not known (for now)
-
-    # Useful custom variables
-    sys.python_bits = 32
-    if sys.maxsize > 2**32:
-        sys.python_bits = 64
+    if 'maxsize' in sys.__dict__:
+        if sys.maxsize > 2**32:
+            sys.python_bits = 64
+        else:
+            sys.python_bits = 32
+    else:
+        import struct
+        sys.python_bits = 8 * struct.calcsize("P")
+        if sys.python_bits == 32:
+            sys.maxsize = 2147483647
+        else:
+            sys.maxsize = int("9223372036854775807")
 
 
 def fix_builtins(override_debug=False):
@@ -182,6 +188,20 @@ def fix_builtins(override_debug=False):
     # Exceptions
     if builtins_dict.get("BaseException") is None:
         override_dict["BaseException"] = Exception
+
+    # basestring
+    if builtins_dict.get("basestring") is None:
+        if builtins_dict.get("bytes") is None:
+            import types
+            override_dict["basestring"] = types.StringType
+        else:
+            override_dict["basestring"] = (str, bytes)  # It works only when used in isinstance
+    # IntType
+    if getattr(int, "__str__", None) is None:
+        import types
+        override_dict["IntType"] = types.IntType
+    else:
+        override_dict["IntType"] = int  # Python >= 2.2
 
     if 'format' not in str.__dict__:
         override_dict["str"] = _Internal.ExtStr
