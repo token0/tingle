@@ -344,10 +344,10 @@ def brew_input_file(mode, chosen_one):
         if not os.path.exists(SCRIPT_DIR+"/input/framework.jar"):
             print_(os.linesep+"ERROR: The input file cannot be found.")
             exit_now(91)
-        safe_copy(SCRIPT_DIR+"/input/framework.jar", TMP_DIR+"/framework.jar")
-        safe_copy(SCRIPT_DIR+"/input/build.prop", TMP_DIR+"/build.prop")
+        safe_copy(os.path.join(SCRIPT_DIR, "input", "framework.jar"), os.path.join(TMP_DIR, "framework.jar"))
+        safe_copy(os.path.join(SCRIPT_DIR, "input", "build.prop"), os.path.join(TMP_DIR, "build.prop"))
     else:
-        safe_copy("/system/framework/framework.jar", TMP_DIR+"/framework.jar")
+        safe_copy("/system/framework/framework.jar", os.path.join(TMP_DIR, "framework.jar"))
 
 
 def decompress(file, out_dir):
