@@ -1,7 +1,7 @@
 sudo: false
 os: linux
+dist: trusty
 language: python
-dist: precise
 
 git:
   depth: 3
@@ -12,18 +12,21 @@ env:
 matrix:
   include:
     - python: "2.6"
-      env: TOXENV=py26
+    - python: "2.7"
     - python: "3.2"
-      env: TOXENV=py32
+    - python: "3.6"
     - python: "nightly"
-      env: TOXENV=py-nightly
     - python: "pypy"
-      env: TOXENV=pypy
-    - python: "pypy3"
-      env: TOXENV=pypy3
-    - os: osx
+    - python: "pypy-5.3.1"
+    - python: "pypy3-2.4.0"
+
+    - env: Python=2.7
+      os: osx
       language: generic
-      env: TOXENV=py-default
+      before_install:
+        - export TRAVIS_PYTHON_VERSION="$Python"
+        - brew update
+        - brew install p7zip
   allow_failures:
     - os: osx
   fast_finish: true
@@ -32,11 +35,5 @@ addons:
   apt:
     packages:
       - p7zip-full
-      - openjdk-7-jre
 
-before_install:
-  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew update; fi;
-  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew install p7zip; fi;
-
-install: true
 script: python main.py
