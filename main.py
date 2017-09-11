@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Tingle - File patcher for Android."""
+"""Tingle - Android patcher."""
 
 import sys
 import os
