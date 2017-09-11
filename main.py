@@ -14,6 +14,43 @@ __author__ = "ale5000, moosd"
 DEPS_PATH = {}
 DEBUG_PROCESS = False
 UNLOCKED_ADB = True
+PATCH_NOT_IMPL_METHOD_MSG = "You must implement this method in your Patch class => {0}"
+
+
+class BasePatch(object):
+    """Base implementation for a patching class."""
+
+    _patch_ver = 0
+
+    def _initialize(self):
+        raise NotImplementedError(str(PATCH_NOT_IMPL_METHOD_MSG).format(get_func_name()))
+
+    def _set_files_list(self):
+        raise NotImplementedError(str(PATCH_NOT_IMPL_METHOD_MSG).format(get_func_name()))
+
+    def get_files_list(self):
+        return self.files
+
+    def __init__(self):
+        self._initialize()
+        self.files = []
+        self._set_files_list()
+
+        if(not isinstance(self.__class__.name, basestring) or
+           not isinstance(self.__class__.version, basestring) or
+           not self.files):
+            raise RuntimeError("There was one or more missing attribute(s)")
+
+        if self.__class__._patch_ver != BasePatch._patch_ver:
+            raise RuntimeError("Patch version mismatch")
+
+
+def get_func_name():
+    try:
+        return sys._getframe(1).f_code.co_name
+    except AttributeError:
+        pass
+    return "?"
 
 
 def init():
@@ -44,6 +81,8 @@ def init():
 
     # Register exit handler
     atexit.register(on_exit)
+
+    sys.BasePatch = BasePatch
 
 
 def on_exit():
@@ -331,15 +370,14 @@ def parse_sdk_ver(filename):
     return None
 
 
-def brew_input_file(mode, chosen_one):
+def brew_input_file(mode, files_list, chosen_one):
     if mode == 1:
-        # Pull framework somewhere temporary
         print_(" *** Pulling framework from device...")
-        try:
-            safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/framework/framework.jar", "."])
-            safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_one, "pull", "/system/build.prop", "."])
-        except (subprocess.CalledProcessError, OSError):
-            exit_now(90)
+        for path, filename in files_list:
+            try:
+                safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_one, "pull", path+"/"+filename, "."])
+            except (subprocess.CalledProcessError, OSError):
+                exit_now(90)
     elif mode == 2:
         if not os.path.exists(SCRIPT_DIR+"/input/framework.jar"):
             print_(os.linesep+"ERROR: The input file cannot be found.")
@@ -488,7 +526,12 @@ if DUMB_MODE:
 if mode == 1:
     adb_automount_if_needed(SELECTED_DEVICE, "/system")
 
-brew_input_file(mode, SELECTED_DEVICE)
+import patches.sig_spoof
+patch_instance = patches.sig_spoof.Patch()
+files_list = patch_instance.get_files_list()
+files_list.append(["/system", "build.prop"])
+
+brew_input_file(mode, files_list, SELECTED_DEVICE)
 
 DEVICE_SDK = None
 if os.path.exists("build.prop"):
