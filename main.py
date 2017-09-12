@@ -621,7 +621,8 @@ if not DEBUG_PROCESS:
         print_(os.linesep+"ERROR: The function to patch cannot be found, probably your version of Android is NOT supported.")
         exit_now(89)
     elif partially_patched:
-        print_(" *** Previous failed patch attempt, not including the fillinsig method again...")
+        print_(os.linesep+"ERROR: The file is partially patched.")
+        exit_now(93)
     else:
         contents.extend(fillinsig)
 
