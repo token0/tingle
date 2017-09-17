@@ -607,7 +607,7 @@ while i < len(old_contents):
     if not already_patched and in_function and right_line and not done_patching:
         contents = contents[:start_of_line]
         contents.append("move-object/from16 v0, p0\n")
-        contents.append("invoke-static {%s, v0}, Landroid/content/pm/PackageParser;->fillinsig(Landroid/content/pm/PackageInfo;Landroid/content/pm/PackageParser$Package;)V\n" % stored_register)
+        contents.append("invoke-static {" + stored_register + ", v0}, Landroid/content/pm/PackageParser;->fillinsig(Landroid/content/pm/PackageInfo;Landroid/content/pm/PackageParser$Package;)V\n")
         done_patching = True
     else:
         contents.append(old_contents[i])
