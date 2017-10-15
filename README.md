@@ -26,7 +26,7 @@ Python, 7-Zip, Java and ADB.
 * `brew cask install android-platform-tools`
 
 ## How to use
-1. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` seven times in succession.
+1. Make sure `Developer options` is enabled. This is hidden by default since sometime in Android 4.x, you can show it by going to `About phone` and tapping on the `Build number` 7 times in succession.
 2. In the developer settings, find the setting for `Android debugging` and enable it.
 3. Find the setting for `Root access` and make sure ADB has root access.
 4. Connect your device via USB.
