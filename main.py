@@ -102,6 +102,14 @@ def exit_now(err_code):
     sys.exit(err_code)
 
 
+def safe_decode(in_bytes):
+    try:
+        return in_bytes.decode("utf-8")
+    except UnicodeError:
+        pass
+    return str(in_bytes)
+
+
 def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
@@ -166,7 +174,7 @@ def safe_subprocess_run(command, raise_error=True):
     except subprocess.CalledProcessError:
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
-        e_text += "Output: "+e.output.decode("utf-8").strip()
+        e_text += "Output: "+safe_decode(e.output).strip()
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
@@ -188,7 +196,7 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
     except subprocess.CalledProcessError:
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
-        e_text += "Output: "+e.output.decode("utf-8").strip()
+        e_text += "Output: "+safe_decode(e.output).strip()
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
