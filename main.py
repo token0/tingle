@@ -410,7 +410,7 @@ def compress(in_dir, file):
     if sys.platform == "linux-android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
-        comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, in_dir+"*.dex"]
+        comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, os.path.join(in_dir, "*.dex")]
 
     try:
         safe_subprocess_run(comp_cmd)
@@ -657,7 +657,7 @@ safe_copy(os.path.join(TMP_DIR, "framework.jar"), BACKUP_FILE)
 
 # Put classes back in the archive
 print_(" *** Recompressing framework...")
-compress(os.curdir+"/out/", "framework.jar")
+compress(os.path.join(os.curdir, "out"), "framework.jar")
 
 # Copy the patched file to the output folder
 print_(" *** Copying the patched file to the output folder...")
