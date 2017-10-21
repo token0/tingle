@@ -11,6 +11,10 @@ import shutil
 __app__ = "Tingle"
 __author__ = "ale5000, moosd"
 
+DEFAULT_ENCODING = "utf-8"
+FALLBACK_OUT_ENCODING_1 = sys.stdout.encoding
+FALLBACK_OUT_ENCODING_2 = "cp850"
+
 DEPS_PATH = {}
 DEBUG_PROCESS = False
 UNLOCKED_ADB = True
@@ -102,15 +106,15 @@ def exit_now(err_code):
     sys.exit(err_code)
 
 
-def safe_decode(in_bytes):
+def safe_output_decode(in_bytes):
     try:
-        return in_bytes.decode("utf-8")
+        return in_bytes.decode(DEFAULT_ENCODING)
     except UnicodeError:
         try:
-            return in_bytes.decode(sys.stdout.encoding)
+            return in_bytes.decode(FALLBACK_OUT_ENCODING_1)
         except UnicodeError:
             try:
-                return in_bytes.decode("cp850")
+                return in_bytes.decode(FALLBACK_OUT_ENCODING_2)
             except UnicodeError:
                 pass
     return str(in_bytes)
@@ -180,7 +184,7 @@ def safe_subprocess_run(command, raise_error=True):
     except subprocess.CalledProcessError:
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
-        e_text += "Output: "+safe_decode(e.output).strip()
+        e_text += "Output: "+safe_output_decode(e.output).strip()
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
@@ -202,7 +206,7 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
     except subprocess.CalledProcessError:
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
-        e_text += "Output: "+safe_decode(e.output).strip()
+        e_text += "Output: "+safe_output_decode(e.output).strip()
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
