@@ -106,7 +106,13 @@ def safe_decode(in_bytes):
     try:
         return in_bytes.decode("utf-8")
     except UnicodeError:
-        pass
+        try:
+            return in_bytes.decode(sys.stdout.encoding)
+        except UnicodeError:
+            try:
+                return in_bytes.decode("cp850")
+            except UnicodeError:
+                pass
     return str(in_bytes)
 
 
