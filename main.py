@@ -102,6 +102,8 @@ def on_exit():
 
 def exit_now(err_code):
     if err_code != 0:
+        import time
+        time.sleep(0.2)  # Give time to allow external locks to be released
         print_(os.linesep+"ERROR CODE:", err_code)
     sys.exit(err_code)
 
@@ -433,6 +435,12 @@ def compress(in_dir, file):
     try:
         safe_subprocess_run(comp_cmd)
     except (subprocess.CalledProcessError, OSError):
+        e = sys.exc_info()[1]
+        output = safe_output_decode(e.output).strip()
+
+        if e.returncode == 2 and "7-Zip" in output and "cannot move the file" in output:
+            print_("ERROR: Another process (probably an antivirus) is locking the temporary files and the process cannot continue.")
+        del e
         exit_now(88)
     return True
 
