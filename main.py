@@ -438,7 +438,8 @@ def compress(in_dir, file):
         e = sys.exc_info()[1]
         output = safe_output_decode(e.output).strip()
 
-        if e.returncode == 2 and "7-Zip" in output and "cannot move the file" in output:
+        if (e.returncode == 2 and "cannot move the file" in output and ".tmp" in output or  # 7za
+           e.returncode == 15 and "Could not create output file" in output):  # zip
             print_("ERROR: Another process (probably an antivirus) is locking the temporary files and the process cannot continue.")
         del e
         exit_now(88)
