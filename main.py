@@ -102,9 +102,9 @@ def on_exit():
 
 def exit_now(err_code):
     if err_code != 0:
+        print_(os.linesep+"ERROR CODE:", err_code)
         import time
         time.sleep(0.2)  # Give time to allow external locks to be released
-        print_(os.linesep+"ERROR CODE:", err_code)
     sys.exit(err_code)
 
 
