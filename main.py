@@ -343,7 +343,7 @@ def enable_device_writing(chosen_device):
         remount_check = safe_output_decode_false_passthrough(safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "remount"]))
         debug(remount_check)
     else:
-        remount_check = safe_output_decode(subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system /system && mount' | grep ' /system '"]))  # Untested
+        remount_check = safe_output_decode(safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system /system && mount' | grep ' /system '"]))  # Untested
         debug(remount_check)
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.")
