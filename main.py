@@ -702,7 +702,7 @@ if mode == 1:
     print_(" *** Pushing changes to the device...")
     try:
         if not DEBUG_PROCESS:
-            output = subprocess.check_output([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
+            output = safe_subprocess_run([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"])
             debug(safe_output_decode(output).rstrip())
     except subprocess.CalledProcessError as e:
         output = safe_output_decode(e.output)
