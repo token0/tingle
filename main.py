@@ -122,6 +122,12 @@ def safe_output_decode(in_bytes):
     return str(in_bytes)
 
 
+def safe_output_decode_false_passthrough(output):
+    if output == False:
+        return False
+    return safe_output_decode(output)
+
+
 def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
@@ -230,7 +236,7 @@ def display_info():
     print_("Author: "+__author__+os.linesep)
 
     print_("Installed dependencies:")
-    print_("- 7za "+parse_7za_version(subprocess.check_output(["7za", "i"]).decode("utf-8")))
+    print_("- 7za "+parse_7za_version(safe_output_decode(subprocess.check_output(["7za", "i"]))))
     print_("-----------------------"+os.linesep)
 
 
@@ -281,7 +287,7 @@ def user_question(msg, max_val, default_val=1, show_question=True):
 def select_device():
     # Start adb server before using it otherwise we get an unintended output inside other commands
     subprocess.check_output([DEPS_PATH["adb"], "start-server"])
-    devices = subprocess.check_output([DEPS_PATH["adb"], "devices"]).decode("utf-8")
+    devices = safe_output_decode(subprocess.check_output([DEPS_PATH["adb"], "devices"]))
     if devices.count(os.linesep) <= 2:
         print_(os.linesep+"ERROR: No device detected! This mean that no device is connected or that your device have 'Android debugging' disabled.")
         exit_now(0)
@@ -302,12 +308,12 @@ def select_device():
 def adb_automount_if_needed(chosen_device, partition):
     print_(" *** Automounting "+partition+" (if not already mounted)...")
     output = safe_subprocess_run([DEPS_PATH["adb"], "-s", chosen_device, "shell", "case $(mount) in  *' "+partition+" '*) ;;  *) mount -v '"+partition+"';;  esac"])
-    debug(output.decode("utf-8"))
+    debug(safe_output_decode(output))
 
 
 def root_adbd(chosen_device):
     print_(" *** Rooting adbd...")
-    root_output = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]).decode("utf-8")
+    root_output = safe_output_decode(subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "root"]))
 
     if "root access is disabled" in root_output:
         print_(os.linesep+"ERROR: You do NOT have root or root access is disabled.")
@@ -325,8 +331,7 @@ def root_adbd(chosen_device):
         return
 
     output = safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "wait-for-device"])
-    if output is not False:
-        debug(output.decode("utf-8"))
+    debug(safe_output_decode_false_passthrough(output))
 
 
 def enable_device_writing(chosen_device):
@@ -335,11 +340,10 @@ def enable_device_writing(chosen_device):
 
     print_(" *** Remounting /system...")
     if(UNLOCKED_ADB):
-        remount_check = safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "remount"])
-        if remount_check is not False:
-            remount_check = remount_check.decode("utf-8")
+        remount_check = safe_output_decode_false_passthrough(safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "remount"]))
+        debug(remount_check)
     else:
-        remount_check = subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]).decode("utf-8")  # Untested
+        remount_check = safe_output_decode(subprocess.check_output([DEPS_PATH["adb"], "-s", chosen_device, "shell", "su -c 'mount -o remount,rw /system && mount' | grep /system"]))  # Untested
         debug(remount_check)
         if "su: not found" in remount_check:
             print_(os.linesep+"ERROR: The device is NOT rooted.")
@@ -347,7 +351,6 @@ def enable_device_writing(chosen_device):
         if "rw," not in remount_check:
             print_(os.linesep+"ERROR: Alternative remount failed.")
             exit_now(81)
-    debug(remount_check)
     if("remount failed" in remount_check) and ("Success" not in remount_check):  # Do NOT stop with "remount failed: Success"
         print_(os.linesep+"ERROR: Remount failed.")
         exit_now(81)
@@ -384,7 +387,7 @@ def parse_sdk_ver(filename):
     try:
         for line in fo:
             if line.find(search_term) == 0:
-                return line.rstrip().decode("utf-8")[21:]
+                return line.decode("utf-8").rstrip()[21:]
     finally:
         fo.close()
     return None
@@ -524,7 +527,7 @@ handle_dependencies(DEPS_PATH, mode)
 
 SELECTED_DEVICE = "ManualMode"
 if mode == 1:
-    if safe_subprocess_run([DEPS_PATH["adb"], "version"], False) is False:
+    if safe_subprocess_run([DEPS_PATH["adb"], "version"], False) == False:
         print_(os.linesep+"ERROR: ADB is not setup correctly.")
         exit_now(92)
 
@@ -669,7 +672,7 @@ try:
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename])
 except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
     safe_file_delete(TMP_DIR+"/out/"+dex_filename)  # Remove incomplete file
-    output = e.output.decode("utf-8")
+    output = safe_output_decode(e.output)
     if "Unsigned short value out of range: 65536" not in output:
         print_(os.linesep+output.strip())
         print_(os.linesep+"Return code: "+str(e.returncode))
@@ -697,9 +700,9 @@ if mode == 1:
     try:
         if not DEBUG_PROCESS:
             output = subprocess.check_output([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"], stderr=subprocess.STDOUT)
-            debug(output.decode("utf-8").rstrip())
+            debug(safe_output_decode(output).rstrip())
     except subprocess.CalledProcessError as e:
-        output = e.output.decode("utf-8")
+        output = safe_output_decode(e.output)
         debug(output.strip())
         if e.returncode == 1 and "No space left on device" in output:
             warning("Pushing has failed, we will retry from the recovery.")
