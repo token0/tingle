@@ -339,7 +339,7 @@ def enable_device_writing(chosen_device):
     print_(" *** Unlocked ADB:", UNLOCKED_ADB)
 
     print_(" *** Remounting /system...")
-    if(UNLOCKED_ADB):
+    if UNLOCKED_ADB:
         remount_check = safe_output_decode_false_passthrough(safe_subprocess_run_timeout([DEPS_PATH["adb"], "-s", chosen_device, "remount"]))
         debug(remount_check)
         if "Not running as root" in remount_check:
