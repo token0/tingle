@@ -66,12 +66,12 @@ def init():
 
     import atexit
 
-    if sys.platform_codename == "win":
-        os.system("TITLE "+__app__)
-
     # Activate Python compatibility layer
     pycompatlayer.set_default_encoding()
     pycompatlayer.fix_all()
+
+    if sys.platform_codename == "win":
+        os.system("TITLE "+__app__)
 
     # Add tools folder to search path (used from subprocess)
     os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "")
