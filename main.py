@@ -66,7 +66,7 @@ def init():
 
     import atexit
 
-    if sys.platform == "win32":
+    if sys.platform_codename == "win":
         os.system("TITLE "+__app__)
 
     # Activate Python compatibility layer
@@ -95,7 +95,7 @@ def on_exit():
     # Clean up
     if TMP_DIR is not None:
         shutil.rmtree(TMP_DIR+"/")
-    if sys.platform == "win32" and not DUMB_MODE:
+    if sys.platform_codename == "win" and not DUMB_MODE:
         import msvcrt
         msvcrt.getch()  # Wait a keypress before exit (useful when the script is running from a double click)
 
@@ -132,7 +132,7 @@ def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
     errors = ""
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         deps = ["dalvikvm", "busybox", "zip"]
     else:
         deps = ["java", "7za"]
@@ -141,7 +141,7 @@ def handle_dependencies(deps_path, mode):
         deps += ["adb"]
 
     for dep in deps:
-        path = find_executable(dep+"-"+sys.platform)
+        path = find_executable(dep+"-"+sys.platform_codename)
         if path is None:
             path = find_executable(dep)
 
@@ -422,7 +422,7 @@ def decompress(file, out_dir):
     debug("Decompressing "+file)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
     else:
         decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
@@ -437,7 +437,7 @@ def decompress(file, out_dir):
 
 def compress(in_dir, file):
     debug("Compressing "+file)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
         comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, os.path.join(in_dir, "*.dex")]
@@ -458,7 +458,7 @@ def compress(in_dir, file):
 
 def disassemble(file, out_dir, device_sdk):
     debug("Disassembling "+file)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.Main"]
     else:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
@@ -467,14 +467,14 @@ def disassemble(file, out_dir, device_sdk):
         disass_cmd.extend(["-a", device_sdk])
 
     subprocess.check_call(disass_cmd)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         clean_dalvik_cache(SCRIPT_DIR+"/tools/baksmali-dvk.jar")
     return True
 
 
 def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "assemble", "-j", "1"]
     else:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar", "assemble"]
@@ -485,7 +485,7 @@ def assemble(in_dir, file, device_sdk, hide_output=False):
     if hide_output:
         return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT)
     subprocess.check_call(ass_cmd)
-    if sys.platform == "linux-android":
+    if sys.platform_codename == "linux-android":
         clean_dalvik_cache(SCRIPT_DIR+"/tools/smali-dvk.jar")
     return True
 
@@ -518,7 +518,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir, de
     print_(" *** Reassembling classes...")
     assemble(smali_dir, out_dir+dex_filename, device_sdk)
     assemble(smali_dir_last, out_dir+dex_filename_last, device_sdk)
-    if sys.platform == "win32":
+    if sys.platform_codename == "win":
         subprocess.check_call(["attrib", "-a", out_dir+dex_filename])
         subprocess.check_call(["attrib", "-a", out_dir+dex_filename_last])
 
@@ -526,7 +526,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir, de
 init()
 
 question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep
-if sys.platform == "linux-android":
+if sys.platform_codename == "linux-android":
     question += "    3 - Patch file directly from the device"+os.linesep
 mode = user_question(question, 3, 2)
 
@@ -542,7 +542,7 @@ if mode == 1:
     if DEBUG_PROCESS:
         print_(" *** NOTE: Running in debug mode, WILL NOT ACTUALLY PATCH AND PUSH TO DEVICE")
 
-print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform+")")
+print_(os.linesep+" *** OS:", get_OS(), "("+sys.platform_codename+")")
 print_(" *** Python:", str(sys.version_info[0])+"."+str(sys.version_info[1])+"."+str(sys.version_info[2]), "("+str(sys.python_bits), "bit"+")")
 print_(" *** Mode:", mode)
 
@@ -675,7 +675,7 @@ os.makedirs("out/")
 
 try:
     assemble(smali_folder, "out/"+dex_filename, DEVICE_SDK, True)
-    if sys.platform == "win32":
+    if sys.platform_codename == "win":
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename])
 except subprocess.CalledProcessError:  # ToDO: Check e.cmd
     e = sys.exc_info()[1]
