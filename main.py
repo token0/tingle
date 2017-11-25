@@ -193,12 +193,14 @@ def safe_subprocess_run(command, raise_error=True):
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
         e_text += "Output: "+safe_output_decode(e.output).strip()
+        del e
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
         e_type, e = sys.exc_info()[:2]
         if display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error):
             raise
+        del e
 
     return False
 
@@ -215,12 +217,14 @@ def safe_subprocess_run_timeout(command, raise_error=True, timeout=6):
         e_type, e = sys.exc_info()[:2]
         e_text = "Cmd: "+str(e.cmd) + os.linesep + "Return code: "+str(e.returncode) + os.linesep
         e_text += "Output: "+safe_output_decode(e.output).strip()
+        del e
         if display_error_info(e_type, e_text, raise_error):
             raise
     except OSError:
         e_type, e = sys.exc_info()[:2]
         if display_error_info(e_type, "Name: "+e.strerror+" ("+str(e.errno)+") ", raise_error):
             raise
+        del e
 
     return False
 
@@ -673,13 +677,15 @@ try:
     assemble(smali_folder, "out/"+dex_filename, DEVICE_SDK, True)
     if sys.platform == "win32":
         subprocess.check_call(["attrib", "-a", "out/"+dex_filename])
-except subprocess.CalledProcessError as e:  # ToDO: Check e.cmd
+except subprocess.CalledProcessError:  # ToDO: Check e.cmd
+    e = sys.exc_info()[1]
     safe_file_delete(TMP_DIR+"/out/"+dex_filename)  # Remove incomplete file
     output = safe_output_decode(e.output)
     if "Unsigned short value out of range: 65536" not in output:
         print_(os.linesep+output.strip())
         print_(os.linesep+"Return code: "+str(e.returncode))
         exit_now(83)
+    del e
     warning("The reassembling has failed (probably we have exceeded the 64K methods limit)")
     warning("but do NOT worry, we will retry.", False)
     move_methods_workaround(dex_filename, dex_filename_last, "framework/", "out/", DEVICE_SDK)
@@ -704,7 +710,8 @@ if mode == 1:
         if not DEBUG_PROCESS:
             output = safe_subprocess_run([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"])
             debug(safe_output_decode(output).rstrip())
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
+        e = sys.exc_info()[1]
         output = safe_output_decode(e.output)
         debug(output.strip())
         if e.returncode == 1 and "No space left on device" in output:
@@ -715,6 +722,7 @@ if mode == 1:
             subprocess.check_output([DEPS_PATH["adb"], "-s", SELECTED_DEVICE, "push", "framework.jar", "/system/framework/framework.jar"])
         else:
             raise
+        del e
     # Kill ADB server
     subprocess.check_call([DEPS_PATH["adb"], "kill-server"])
 
