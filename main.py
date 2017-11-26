@@ -132,7 +132,7 @@ def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
     errors = ""
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         deps = ["dalvikvm", "busybox", "zip"]
     else:
         deps = ["java", "7za"]
@@ -420,7 +420,7 @@ def decompress(file, out_dir):
     debug("Decompressing "+file)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
     else:
         decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
@@ -435,7 +435,7 @@ def decompress(file, out_dir):
 
 def compress(in_dir, file):
     debug("Compressing "+file)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
     else:
         comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, os.path.join(in_dir, "*.dex")]
@@ -456,7 +456,7 @@ def compress(in_dir, file):
 
 def disassemble(file, out_dir, device_sdk):
     debug("Disassembling "+file)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.Main"]
     else:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
@@ -465,14 +465,14 @@ def disassemble(file, out_dir, device_sdk):
         disass_cmd.extend(["-a", device_sdk])
 
     subprocess.check_call(disass_cmd)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         clean_dalvik_cache(SCRIPT_DIR+"/tools/baksmali-dvk.jar")
     return True
 
 
 def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "assemble", "-j", "1"]
     else:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar", "assemble"]
@@ -483,7 +483,7 @@ def assemble(in_dir, file, device_sdk, hide_output=False):
     if hide_output:
         return subprocess.check_output(ass_cmd, stderr=subprocess.STDOUT)
     subprocess.check_call(ass_cmd)
-    if sys.platform_codename == "linux-android":
+    if sys.platform_codename == "android":
         clean_dalvik_cache(SCRIPT_DIR+"/tools/smali-dvk.jar")
     return True
 
@@ -524,7 +524,7 @@ def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir, de
 init()
 
 question = "MENU"+os.linesep+os.linesep+"    1 - Patch file from a device (adb)"+os.linesep+"    2 - Patch file from the input folder"+os.linesep
-if sys.platform_codename == "linux-android":
+if sys.platform_codename == "android":
     question += "    3 - Patch file directly from the device"+os.linesep
 mode = user_question(question, 3, 2)
 

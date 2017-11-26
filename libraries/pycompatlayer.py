@@ -10,7 +10,7 @@ It is still under development, not all functions are supported.
 from __future__ import nested_scopes
 import sys
 
-__version__ = "0.0.10.dev5"
+__version__ = "0.0.10.dev6"
 __author__ = "ale5000"
 __copyright__ = "Copyright (C) 2016-2017, ale5000"
 __license__ = "LGPLv3+"
@@ -108,7 +108,8 @@ def fix_base(fix_environ):
     if sys.platform.startswith("linux"):
         if "-" not in sys.platform or sys.platform.startswith("linux-arm"):
             import os
-            if os.path.exists("/system/bin/dalvikvm"):
+            vm_path = os.path.join("system", "bin", "dalvikvm")
+            if os.path.exists(os.sep+vm_path) or os.path.exists(os.sep+"system"+os.sep+vm_path):
                 sys.platform = "linux-android"
             else:
                 sys.platform = "linux"
@@ -116,6 +117,8 @@ def fix_base(fix_environ):
     sys.platform_codename = sys.platform
     if sys.platform_codename == "win32":
         sys.platform_codename = "win"
+    elif sys.platform_codename == "linux-android":
+        sys.platform_codename = "android"
 
     if 'maxsize' in sys.__dict__:
         if sys.maxsize > 2**32:
