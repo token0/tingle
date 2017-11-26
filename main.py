@@ -75,6 +75,8 @@ def init():
 
     # Add tools folder to search path (used from find_executable and subprocess)
     os.environ["PATH"] = os.path.join(SCRIPT_DIR, "tools", sys.platform_codename) + os.pathsep + os.path.join(SCRIPT_DIR, "tools") + os.pathsep + os.environ.get("PATH", "")
+    if sys.python_bits == 64:
+        os.environ["PATH"] = os.path.join(SCRIPT_DIR, "tools", sys.platform_codename+"64") + os.pathsep + os.environ["PATH"]
 
     # Set constants (they won't be changed again)
     TMP_DIR = None
