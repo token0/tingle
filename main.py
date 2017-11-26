@@ -73,8 +73,8 @@ def init():
     if sys.platform_codename == "win":
         os.system("TITLE "+__app__)
 
-    # Add tools folder to search path (used from subprocess)
-    os.environ["PATH"] = SCRIPT_DIR+os.sep+"tools" + os.pathsep + os.environ.get("PATH", "")
+    # Add tools folder to search path (used from find_executable and subprocess)
+    os.environ["PATH"] = os.path.join(SCRIPT_DIR, "tools", sys.platform_codename) + os.pathsep + os.path.join(SCRIPT_DIR, "tools") + os.pathsep + os.environ.get("PATH", "")
 
     # Set constants (they won't be changed again)
     TMP_DIR = None
@@ -141,9 +141,7 @@ def handle_dependencies(deps_path, mode):
         deps += ["adb"]
 
     for dep in deps:
-        path = find_executable(dep+"-"+sys.platform_codename)
-        if path is None:
-            path = find_executable(dep)
+        path = find_executable(dep)
 
         if path is None:
             errors += os.linesep + "ERROR: Missing executable => "+dep
