@@ -70,6 +70,8 @@ def init():
     pycompatlayer.set_default_encoding()
     pycompatlayer.fix_all()
 
+    del libraries  # It use only the auto-loaded code
+
     if sys.platform_codename == "win":
         os.system("TITLE "+__app__)
 
