@@ -136,7 +136,7 @@ def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
     deps_type = {}
-    deps_type["decompressor"] = ["7za", "busybox"]
+    deps_type["decompressor"] = ["7za", "unzip", "busybox"]
     deps_type["compressor"] = ["7za", "zip"]
     deps_type["java_vm"] = ["java"]
     if sys.platform_codename == "android":
@@ -436,6 +436,8 @@ def decompress(file, out_dir):
         os.makedirs(out_dir)
     if "7za" in DEPS_PATH:
         decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
+    elif "unzip" in DEPS_PATH:
+        decomp_cmd = [DEPS_PATH["unzip"], "-oq", "-d", out_dir]
     else:
         decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
     decomp_cmd.extend([file, "*.dex"])
