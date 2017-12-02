@@ -135,25 +135,35 @@ def safe_output_decode_false_passthrough(output):
 def handle_dependencies(deps_path, mode):
     from distutils.spawn import find_executable
 
-    errors = ""
+    deps_type = {}
+    deps_type["decompressor"] = ["7za", "busybox"]
+    deps_type["compressor"] = ["7za", "zip"]
+    deps_type["java_vm"] = ["java"]
     if sys.platform_codename == "android":
-        deps = ["dalvikvm", "busybox", "zip"]
-    else:
-        deps = ["java", "7za"]
-
+        deps_type["java_vm"].insert(0, "dalvikvm")
     if mode == 1:
-        deps += ["adb"]
+        deps_type["adb"] = ["adb"]
 
-    for dep in deps:
-        path = find_executable(dep)
+    errors = ""
+    for key, value_list in deps_type.items():
+        found = False
+        for dep in value_list:
+            if dep in deps_path:
+                found = True
+                break  # We have already found the path of this binary, skip it
 
-        if path is None:
-            errors += os.linesep + "ERROR: Missing executable => "+dep
-        else:
-            deps_path[dep] = path
+            path = find_executable(dep)
+
+            if path is not None:
+                deps_path[dep] = path
+                found = True
+                break
+
+        if not found:
+            errors += os.linesep+ "ERROR: Missing "+key+" => "+str(value_list)
 
     if errors:
-        print_(errors)
+        print_(errors +os.linesep+os.linesep+ "NOTE: Only one binary per type is required")
         exit_now(65)
 
 
@@ -424,10 +434,10 @@ def decompress(file, out_dir):
     debug("Decompressing "+file)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    if sys.platform_codename == "android":
-        decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
-    else:
+    if "7za" in DEPS_PATH:
         decomp_cmd = [DEPS_PATH["7za"], "x", "-y", "-bd", "-tzip", "-o"+out_dir]
+    else:
+        decomp_cmd = [DEPS_PATH["busybox"], "unzip", "-oq", "-d", out_dir]
     decomp_cmd.extend([file, "*.dex"])
 
     try:
@@ -439,10 +449,10 @@ def decompress(file, out_dir):
 
 def compress(in_dir, file):
     debug("Compressing "+file)
-    if sys.platform_codename == "android":
-        comp_cmd = ["zip", "-qrj9X", file, in_dir, "-i", "*.dex"]
-    else:
+    if "7za" in DEPS_PATH:
         comp_cmd = [DEPS_PATH["7za"], "a", "-y", "-bd", "-tzip", file, os.path.join(in_dir, "*.dex")]
+    else:
+        comp_cmd = [DEPS_PATH["zip"], "-qrj9X", file, in_dir, "-i", "*.dex"]
 
     try:
         safe_subprocess_run(comp_cmd)
@@ -460,10 +470,10 @@ def compress(in_dir, file):
 
 def disassemble(file, out_dir, device_sdk):
     debug("Disassembling "+file)
-    if sys.platform_codename == "android":
-        disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.Main"]
-    else:
+    if "java" in DEPS_PATH:
         disass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/baksmali.jar"]
+    else:
+        disass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx128m", "-cp", SCRIPT_DIR+"/tools/baksmali-dvk.jar", "org.jf.baksmali.Main"]
     disass_cmd.extend(["dis", "-l", "--seq", "-o", out_dir, file])
     if device_sdk is not None:
         disass_cmd.extend(["-a", device_sdk])
@@ -476,10 +486,10 @@ def disassemble(file, out_dir, device_sdk):
 
 def assemble(in_dir, file, device_sdk, hide_output=False):
     debug("Assembling "+file)
-    if sys.platform_codename == "android":
-        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "assemble", "-j", "1"]
-    else:
+    if "java" in DEPS_PATH:
         ass_cmd = [DEPS_PATH["java"], "-jar", SCRIPT_DIR+"/tools/smali.jar", "assemble"]
+    else:
+        ass_cmd = [DEPS_PATH["dalvikvm"], "-Xmx166m", "-cp", SCRIPT_DIR+"/tools/smali-dvk.jar", "org.jf.smali.Main", "assemble", "-j", "1"]
     ass_cmd.extend(["-o", file, in_dir])
     if device_sdk is not None:
         ass_cmd.extend(["-a", device_sdk])
