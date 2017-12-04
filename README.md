@@ -1,7 +1,7 @@
 # Tingle
-[![Bounties](https://img.shields.io/bountysource/team/tingle-patcher/activity.svg)]()
+[![Bounties](https://img.shields.io/bountysource/team/tingle-patcher/activity.svg)](https://www.bountysource.com/teams/tingle-patcher)
 [![Build Status](https://travis-ci.org/ale5000-git/tingle.svg?branch=master)](https://travis-ci.org/ale5000-git/tingle)
-[![License](https://img.shields.io/github/license/ale5000-git/tingle.svg)]()
+[![License](https://img.shields.io/github/license/ale5000-git/tingle.svg)](https://github.com/ale5000-git/tingle)
 
 ## What this does
 This will allow you to patch the Android system and inject features without needing to recompile the OS or install Xposed.
