@@ -599,7 +599,7 @@ smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "fra
 
 # Check the existence of the file to patch
 if smali_folder is None:
-    print_(os.linesep+"ERROR: The file to patch cannot be found, please report the problem.")
+    print_(os.linesep+"ERROR: The smali file to patch cannot be found, please report the problem to https://github.com/ale5000-git/tingle")
     exit_now(82)
 to_patch = smali_folder+smali_to_search
 
