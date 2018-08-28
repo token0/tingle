@@ -629,6 +629,9 @@ while i < len(old_contents):
         already_patched = True
     if ".method public static fillinsig" in old_contents[i]:
         partially_patched = True
+    if ".method private protected static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: Android 9.x (or LOS 16)")
+        in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Android 8.x / 7.x / 6.x (or LOS/CM 13-15)")
         in_function = True
