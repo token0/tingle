@@ -1,5 +1,5 @@
 # Tingle
-[![GitHub release](https://img.shields.io/github/release/ale5000-git/tingle.svg)](https://github.com/ale5000-git/pycompatlayer/releases/latest)
+[![GitHub release](https://img.shields.io/github/release/ale5000-git/tingle.svg)](https://github.com/ale5000-git/tingle/releases/latest)
 [![License](https://img.shields.io/github/license/ale5000-git/tingle.svg)](https://github.com/ale5000-git/tingle)
 [![Build Status](https://travis-ci.org/ale5000-git/tingle.svg?branch=master)](https://travis-ci.org/ale5000-git/tingle)
 [![Bountysource](https://img.shields.io/bountysource/team/tingle-patcher/activity.svg)](https://www.bountysource.com/teams/tingle-patcher)
