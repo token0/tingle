@@ -1,6 +1,4 @@
-sudo: false
 os: linux
-dist: trusty
 language: python
 
 git:
