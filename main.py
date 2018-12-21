@@ -504,7 +504,7 @@ def assemble(in_dir, file, device_sdk, hide_output=False):
     return True
 
 
-def find_smali(smali_to_search, search_dir, device_sdk):
+def find_smali(search_dir, device_sdk):
     dir_list = tuple(sorted(os.listdir(search_dir)))
 
     if len(dir_list) == 0:
@@ -514,9 +514,11 @@ def find_smali(smali_to_search, search_dir, device_sdk):
     for filename in dir_list:
         out_dir = "./smali-"+remove_ext(filename)+"/"
         disassemble(search_dir+filename, out_dir, device_sdk)
-        if os.path.exists(out_dir+smali_to_search):
-            return (out_dir, filename, dir_list[-1])
-    return (None, None, None)
+        if os.path.exists(out_dir+"android/content/pm/PackageParser.smali"):
+            return (out_dir, "android/content/pm/PackageParser.smali", filename, dir_list[-1])
+        if os.path.exists(out_dir+"com/android/server/pm/PackageManagerService.smali"):
+            return (out_dir, "com/android/server/pm/PackageManagerService.smali", filename, dir_list[-1])
+    return (None, None, None, None)
 
 
 def move_methods_workaround(dex_filename, dex_filename_last, in_dir, out_dir, device_sdk):
@@ -594,14 +596,13 @@ decompress("framework.jar", "framework/")
 
 # Disassemble it
 print_(" *** Disassembling classes...")
-smali_to_search = "android/content/pm/PackageParser.smali"
-smali_folder, dex_filename, dex_filename_last = find_smali(smali_to_search, "framework/", DEVICE_SDK)
+smali_folder, smali_file_path, dex_filename, dex_filename_last = find_smali("framework/", DEVICE_SDK)
 
 # Check the existence of the file to patch
 if smali_folder is None:
     print_(os.linesep+"ERROR: The smali file to patch cannot be found, please report the problem to https://github.com/ale5000-git/tingle")
     exit_now(82)
-to_patch = smali_folder+smali_to_search
+to_patch = smali_folder+smali_file_path
 
 # Do the injection
 print_(" *** Patching...")
@@ -631,6 +632,9 @@ while i < len(old_contents):
         partially_patched = True
     if ".method private protected static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Android 9.x (or LOS 16)")
+        in_function = True
+    if ".method private generatePackageInfo(Lcom/android/server/pm/PackageSetting;II)Landroid/content/pm/PackageInfo;" in old_contents[i]:
+        print_(" *** Detected: Android 8.1.x (or LOS 15.1)")
         in_function = True
     if ".method public static generatePackageInfo(Landroid/content/pm/PackageParser$Package;[IIJJLjava/util/Set;Landroid/content/pm/PackageUserState;I)Landroid/content/pm/PackageInfo;" in old_contents[i]:
         print_(" *** Detected: Android 8.x / 7.x / 6.x (or LOS/CM 13-15)")
