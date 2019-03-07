@@ -445,6 +445,11 @@ def decompress(file, out_dir):
     try:
         safe_subprocess_run(decomp_cmd)
     except (subprocess.CalledProcessError, OSError):
+        e = sys.exc_info()[1]
+
+        if "unzip" in DEPS_PATH and e.returncode == 11:
+            print_("ERROR: No dex file(s) found, probably the ROM is odexed.")
+        del e
         exit_now(87)
     return True
 
