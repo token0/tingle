@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 import shutil
+import hashlib
 
 __app__ = "Tingle"
 __author__ = "ale5000, moosd"
@@ -574,7 +575,7 @@ print_(str(" *** Working dir: {0}").format(TMP_DIR))
 if mode == 1:
     print_(" *** Selected device:", SELECTED_DEVICE)
 
-OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", SELECTED_DEVICE)
+OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", hashlib.md5(SELECTED_DEVICE.encode('utf-8')).hexdigest())
 if not os.path.exists(OUTPUT_PATH):
     os.makedirs(OUTPUT_PATH)
 
